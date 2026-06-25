@@ -39,7 +39,7 @@ services:
 
   ################################################################################
 
-  cdp-node-backend-template:
+  aice-triage-automation:
     build:
       context: .
       target: development

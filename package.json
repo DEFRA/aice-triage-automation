@@ -1,7 +1,7 @@
 {
-  "name": "cdp-node-backend-template",
-  "version": "0.1.0",
-  "description": "CDP Node.js Backend Template",
+  "name": "aice-triage-automation",
+  "version": "0.0.0",
+  "description": "aice-triage-automation",
   "main": "src/index.js",
   "type": "module",
   "engines": {
