@@ -1,8 +1,10 @@
 import { pino } from 'pino'
 
-import { loggerOptions } from '#/plugins/logger-options.js'
+import { loggerOptions, loggerStream } from '#/plugins/logger-options.js'
 
-const logger = pino(loggerOptions)
+const logger = loggerStream
+  ? pino(loggerOptions, loggerStream)
+  : pino(loggerOptions)
 
 export function createLogger() {
   return logger
