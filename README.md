@@ -10,6 +10,7 @@ use-case triage process.
   - [Setup](#setup)
   - [Development](#development)
   - [Testing](#testing)
+  - [Coding standards](#coding-standards)
   - [Production](#production)
   - [Npm scripts](#npm-scripts)
   - [Update dependencies](#update-dependencies)
@@ -108,6 +109,18 @@ To test the application run:
 ```bash
 npm run test
 ```
+
+Tests live in the root `tests/` directory, mirroring the `src/` structure (this
+differs from the CDP template, which colocates tests). See
+[Coding standards](./docs/coding-standards.md) for details.
+
+### Coding standards
+
+This service follows the
+[DEFRA AICE JavaScript style guide](https://github.com/DEFRA/aice-team/blob/main/style-guides/javascript.md),
+enforced via ESLint (neostandard) and Prettier. See
+[docs/coding-standards.md](./docs/coding-standards.md) for the conventions and
+for where this repo deliberately deviates from the CDP Node.js template.
 
 ### Production
 

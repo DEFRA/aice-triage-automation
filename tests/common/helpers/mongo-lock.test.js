@@ -1,4 +1,4 @@
-import { acquireLock, requireLock } from './mongo-lock.js'
+import { acquireLock, requireLock } from '#/common/helpers/mongo-lock.js'
 
 describe('Lock Functions', () => {
   let locker
