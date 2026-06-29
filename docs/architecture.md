@@ -66,15 +66,15 @@ stripping.
 
 `createServer()` registers a chain of Hapi plugins, each owning one concern:
 
-| Plugin            | File                              | Responsibility                                                        |
-| :---------------- | :-------------------------------- | :-------------------------------------------------------------------- |
-| `requestLogger`   | `src/plugins/request-logger.js`   | Structured request logging (hapi-pino).                               |
-| `requestTracing`  | `src/plugins/request-tracing.js`  | Reads/propagates the CDP trace header (`x-cdp-request-id`).           |
-| `metrics`         | `@defra/cdp-metrics`              | Emits CloudWatch EMF metrics.                                         |
-| `secureContext`   | `@defra/hapi-secure-context`      | Loads CA certificates from environment config (TLS trust).           |
-| `pulse`           | `src/plugins/pulse.js`            | Graceful shutdown handling (hapi-pulse), 10s timeout.                 |
-| `mongoDb`         | `src/plugins/mongodb.js`          | Mongo connection pool, indexes, and `mongo-locks` lock manager.       |
-| `router`          | `src/plugins/router.js`           | Registers the application routes.                                     |
+| Plugin           | File                             | Responsibility                                                  |
+| :--------------- | :------------------------------- | :-------------------------------------------------------------- |
+| `requestLogger`  | `src/plugins/request-logger.js`  | Structured request logging (hapi-pino).                         |
+| `requestTracing` | `src/plugins/request-tracing.js` | Reads/propagates the CDP trace header (`x-cdp-request-id`).     |
+| `metrics`        | `@defra/cdp-metrics`             | Emits CloudWatch EMF metrics.                                   |
+| `secureContext`  | `@defra/hapi-secure-context`     | Loads CA certificates from environment config (TLS trust).      |
+| `pulse`          | `src/plugins/pulse.js`           | Graceful shutdown handling (hapi-pulse), 10s timeout.           |
+| `mongoDb`        | `src/plugins/mongodb.js`         | Mongo connection pool, indexes, and `mongo-locks` lock manager. |
+| `router`         | `src/plugins/router.js`          | Registers the application routes.                               |
 
 The `mongoDb` plugin decorates both `server` and `request` with `db` and
 `locker`, so handlers reach the database via `request.db` and acquire write
@@ -96,11 +96,11 @@ Routes live in `src/routes/` and are aggregated by the router plugin. Business
 logic lives in `src/services/`, kept separate from HTTP concerns so handlers
 stay thin.
 
-| Endpoint              | Handler                  | Notes                                  |
-| :-------------------- | :----------------------- | :------------------------------------- |
-| `GET /health`         | `src/routes/health.js`   | Liveness probe — required by CDP.      |
-| `GET /example`        | `src/routes/example.js`  | Template example (remove as needed).   |
-| `GET /example/{id}`   | `src/routes/example.js`  | Template example (remove as needed).   |
+| Endpoint            | Handler                 | Notes                                |
+| :------------------ | :---------------------- | :----------------------------------- |
+| `GET /health`       | `src/routes/health.js`  | Liveness probe — required by CDP.    |
+| `GET /example`      | `src/routes/example.js` | Template example (remove as needed). |
+| `GET /example/{id}` | `src/routes/example.js` | Template example (remove as needed). |
 
 ```
    HTTP request ──▶ router ──▶ route handler ──▶ service ──▶ request.db ──▶ MongoDB
@@ -197,19 +197,19 @@ Key cloud characteristics:
 
 ## Local vs cloud at a glance
 
-| Concern         | Local                                  | Cloud (CDP)                              |
-| :-------------- | :------------------------------------- | :--------------------------------------- |
-| Image target    | `development` (`Dockerfile`)           | `production` (`Dockerfile`)              |
-| Run command     | `npm run docker:dev` (`node --watch`)  | `node src`                               |
-| Code source     | `./src` bind-mounted, hot reload       | Baked into the image                     |
-| MongoDB         | `mongo:7` container                    | Managed MongoDB                          |
-| AWS services    | Floci mock (`:4566`)                   | Real AWS (S3/SQS/SNS/Bedrock)            |
-| Redis           | `redis:7` container                    | Managed / as provisioned                 |
-| Logs            | `pino-pretty`                          | `ecs` JSON → CloudWatch                  |
-| Metrics         | EMF (`AWS_EMF_ENVIRONMENT=Local`)      | EMF → CloudWatch                         |
-| Outbound HTTP   | Direct                                 | Via forward proxy (`HTTP_PROXY`)         |
-| TLS trust       | Not required                           | `secureContext` CA certificates          |
-| `ENVIRONMENT`   | `local`                                | `dev` / `test` / `prod` / …              |
+| Concern       | Local                                 | Cloud (CDP)                      |
+| :------------ | :------------------------------------ | :------------------------------- |
+| Image target  | `development` (`Dockerfile`)          | `production` (`Dockerfile`)      |
+| Run command   | `npm run docker:dev` (`node --watch`) | `node src`                       |
+| Code source   | `./src` bind-mounted, hot reload      | Baked into the image             |
+| MongoDB       | `mongo:7` container                   | Managed MongoDB                  |
+| AWS services  | Floci mock (`:4566`)                  | Real AWS (S3/SQS/SNS/Bedrock)    |
+| Redis         | `redis:7` container                   | Managed / as provisioned         |
+| Logs          | `pino-pretty`                         | `ecs` JSON → CloudWatch          |
+| Metrics       | EMF (`AWS_EMF_ENVIRONMENT=Local`)     | EMF → CloudWatch                 |
+| Outbound HTTP | Direct                                | Via forward proxy (`HTTP_PROXY`) |
+| TLS trust     | Not required                          | `secureContext` CA certificates  |
+| `ENVIRONMENT` | `local`                               | `dev` / `test` / `prod` / …      |
 
 ---
 
