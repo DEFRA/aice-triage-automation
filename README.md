@@ -77,6 +77,11 @@ nvm use
 > [First-Time Dev Setup guide](./docs/first-time-dev-setup.md) for a step-by-step
 > walkthrough (install → MongoDB → `npm run dev` → tests) and an explanation of
 > the dev-mode tooling.
+>
+> **Working with GitHub Copilot?** See
+> [How we use Copilot here](./docs/using-copilot.md) for how AI assistance fits
+> into our SDLC, the guardrails, and a worked feature loop. The repo ships
+> Copilot context in [`.github/copilot-instructions.md`](./.github/copilot-instructions.md).
 
 ### Setup
 
