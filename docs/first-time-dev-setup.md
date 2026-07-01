@@ -78,10 +78,20 @@ This installs ~520 packages. A clean install should report `found 0
 vulnerabilities`. No `.env` file is required to start — every config value has a
 sensible default (see [section 5](#5-configuration-and-the-env-file)).
 
-Optionally install the git hooks (runs format/lint/test before commits):
+Run the first-time setup helper to install and verify git hooks:
+
+```bash
+npm run setup:first-time
+```
+
+This runs `git:hooks` and then `verify:git-hooks` to confirm Husky is
+configured (`core.hooksPath=.husky/_`) and the pre-commit hook is present.
+
+If you ever need to repair hooks manually, run:
 
 ```bash
 npm run git:hooks
+npm run verify:git-hooks
 ```
 
 ---

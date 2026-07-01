@@ -89,14 +89,19 @@ Install application dependencies:
 
 ```bash
 npm install
+npm run setup:first-time
 ```
+
+`setup:first-time` installs Husky hooks and verifies Git is configured with
+`core.hooksPath=.husky/_`.
 
 ### Git hooks
 
-Install git hooks (optional)
+Install or repair git hooks:
 
 ```bash
 npm run git:hooks
+npm run verify:git-hooks
 ```
 
 ### Development
