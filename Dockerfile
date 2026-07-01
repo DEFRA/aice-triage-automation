@@ -15,6 +15,11 @@ COPY --chown=node:node package*.json ./
 RUN npm install
 COPY --chown=node:node ./src ./src
 
+# `npm run dev` uses `node --watch --env-file-if-exists=.env`. Node's watch mode
+# registers the env-file path even when the file is absent, and Node < 24.18
+# crashes with ENOENT trying to watch it. Ensure the file exists in the image.
+RUN touch .env
+
 CMD [ "npm", "run", "docker:dev" ]
 
 FROM defradigital/node:${PARENT_VERSION} AS production

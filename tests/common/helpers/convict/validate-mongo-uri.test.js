@@ -1,4 +1,4 @@
-import { convictValidateMongoUri } from './validate-mongo-uri.js'
+import { convictValidateMongoUri } from '#/common/helpers/convict/validate-mongo-uri.js'
 
 describe('#convictValidateMongoUri', () => {
   test('With correct mongo-uri, Should not throw', () => {

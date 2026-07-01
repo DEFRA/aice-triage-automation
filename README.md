@@ -1,13 +1,16 @@
 # aice-triage-automation
 
-Core delivery platform Node.js Backend Template.
+Backend service that automates the AI Capability and Enablement (AICE) team's AI
+use-case triage process.
 
+- [About this service](#about-this-service)
 - [Requirements](#requirements)
   - [Node.js](#nodejs)
 - [Local development](#local-development)
   - [Setup](#setup)
   - [Development](#development)
   - [Testing](#testing)
+  - [Coding standards](#coding-standards)
   - [Production](#production)
   - [Npm scripts](#npm-scripts)
   - [Update dependencies](#update-dependencies)
@@ -26,6 +29,34 @@ Core delivery platform Node.js Backend Template.
 - [Licence](#licence)
   - [About the licence](#about-the-licence)
 
+## About this service
+
+The AICE team triages incoming requests for AI use cases: a request comes in, a
+short triage call is held, and the team scores the opportunity against a fixed
+rubric before deciding whether to take it forward. Today that work is manual.
+
+This service automates the legwork while keeping a person accountable for every
+judgement. An AI agent reads the triage rules, asks a hosted AI model
+(Amazon Bedrock) to do the heavy reasoning, and proposes scores and draft
+tickets — but it never decides on its own. The triage journey runs in five
+stages:
+
+1. **Intake** — a use-case request arrives (via a GOV.UK Forms submission).
+2. **Transcript** — the recorded triage call's transcript is captured.
+3. **Draft ticket** — the agent drafts a Jira ticket from the transcript.
+4. **Scoring** — the agent scores the use case against the rubric, giving each
+   criterion a red / amber / green (RAG) rating with a written rationale.
+5. **Decision** — a reviewer confirms or overrides the scores and the panel
+   decides the outcome.
+
+A person reviews and approves at every stage; the agent runs under cost and
+time limits, and only OFFICIAL information is handled.
+
+The service is built in plain JavaScript on Node.js, validates data with Joi,
+and runs on Defra's Core Delivery Platform (CDP). It is scaffolded from the
+standard CDP Node.js backend template (Hapi.js), so the sections below describe
+the platform conventions it inherits.
+
 ## Requirements
 
 ### Node.js
@@ -41,6 +72,11 @@ nvm use
 ```
 
 ## Local development
+
+> **New to this project?** See the
+> [First-Time Dev Setup guide](./docs/first-time-dev-setup.md) for a step-by-step
+> walkthrough (install → MongoDB → `npm run dev` → tests) and an explanation of
+> the dev-mode tooling.
 
 ### Setup
 
@@ -73,6 +109,18 @@ To test the application run:
 ```bash
 npm run test
 ```
+
+Tests live in the root `tests/` directory, mirroring the `src/` structure (this
+differs from the CDP template, which colocates tests). See
+[Coding standards](./docs/coding-standards.md) for details.
+
+### Coding standards
+
+This service follows the
+[DEFRA AICE JavaScript style guide](https://github.com/DEFRA/aice-team/blob/main/style-guides/javascript.md),
+enforced via ESLint (neostandard) and Prettier. See
+[docs/coding-standards.md](./docs/coding-standards.md) for the conventions and
+for where this repo deliberately deviates from the CDP Node.js template.
 
 ### Production
 
