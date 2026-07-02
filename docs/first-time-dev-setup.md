@@ -81,7 +81,7 @@ sensible default (see [section 5](#5-configuration-and-the-env-file)).
 Optionally install the git hooks (runs format/lint/test before commits):
 
 ```bash
-npm run git:hooks
+npm run setup:husky
 ```
 
 ---

@@ -8,6 +8,7 @@ use-case triage process.
   - [Node.js](#nodejs)
 - [Local development](#local-development)
   - [Setup](#setup)
+  - [Git hooks](#git-hooks)
   - [Development](#development)
   - [Testing](#testing)
   - [Coding standards](#coding-standards)
@@ -88,10 +89,16 @@ npm install
 
 ### Git hooks
 
-Install git hooks (optional)
+Install Git hooks (optional, one-time per clone):
 
 ```bash
-npm run git:hooks
+npm run setup:husky
+```
+
+Run the same checks manually as the pre-commit hook:
+
+```bash
+npm run git:pre-commit-hook
 ```
 
 ### Development
