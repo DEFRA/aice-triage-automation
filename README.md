@@ -8,6 +8,7 @@ use-case triage process.
   - [Node.js](#nodejs)
 - [Local development](#local-development)
   - [Setup](#setup)
+  - [Git hooks](#git-hooks)
   - [Development](#development)
   - [Testing](#testing)
   - [Coding standards](#coding-standards)
@@ -102,6 +103,12 @@ Install or repair git hooks:
 ```bash
 npm run git:hooks
 npm run verify:git-hooks
+```
+
+Run the same checks manually as the pre-commit hook:
+
+```bash
+npm run git:pre-commit-hook
 ```
 
 ### Development
