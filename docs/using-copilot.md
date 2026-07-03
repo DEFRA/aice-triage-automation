@@ -14,6 +14,7 @@ safely.
 - [Where AI fits in our SDLC](#where-ai-fits-in-our-sdlc)
 - [A worked loop: adding a small feature](#a-worked-loop-adding-a-small-feature)
 - [Prompts that work well here](#prompts-that-work-well-here)
+- [Routines](#routines)
 - [Guardrails — the non-negotiables](#guardrails--the-non-negotiables)
 - [You are accountable, not the model](#you-are-accountable-not-the-model)
 - [Where to go next](#where-to-go-next)
@@ -110,6 +111,26 @@ pay off in this repo:
 
 Weaker prompts are vague ("make this better") or ask for a giant change in one
 go. Small, specific, reviewable steps beat one big generation every time.
+
+## Routines
+
+Routines are named, repeatable workflows stored in `docs/routines/`. Each one
+documents a common task — what it does, when to use it, and the exact steps
+Copilot will run. You trigger a routine by name:
+
+> _"run the workspace-reset routine"_
+
+Copilot reads the file and executes every step in order. You watch, verify each
+result, and stop it if something looks wrong. The routine files are plain
+Markdown — read them yourself before running one so you know what to expect.
+
+| Routine         | Trigger phrase                    | Purpose                                           |
+| :-------------- | :-------------------------------- | :------------------------------------------------ |
+| workspace-reset | "run the workspace-reset routine" | Clear and rebuild the local environment from zero |
+
+> **Why routines?** They give the team a shared vocabulary for common tasks,
+> keep Copilot's behaviour predictable and auditable, and give junior developers
+> a clear model of what's happening rather than a black box.
 
 ## Guardrails — the non-negotiables
 

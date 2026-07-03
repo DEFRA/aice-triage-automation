@@ -66,6 +66,16 @@ npm test               # Vitest + coverage
 
 Or all together: `npm run git:pre-commit-hook`. Fix failures before committing.
 
+## Routines
+
+Named, repeatable workflows live in `docs/routines/`. When asked to run one
+(e.g. _"run the workspace-reset routine"_), read the corresponding file and
+execute every step it describes in order. Do not skip steps.
+
+| Routine         | File                               | When to use                                       |
+| :-------------- | :--------------------------------- | :------------------------------------------------ |
+| workspace-reset | `docs/routines/workspace-reset.md` | Clear and rebuild the local environment from zero |
+
 ## Git workflow
 
 - **Never commit directly to `main`.** Work on a feature branch named for the
