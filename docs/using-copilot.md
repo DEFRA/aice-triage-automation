@@ -15,6 +15,7 @@ safely.
 - [A worked loop: adding a small feature](#a-worked-loop-adding-a-small-feature)
 - [Prompts that work well here](#prompts-that-work-well-here)
 - [Routines](#routines)
+- [Project skills](#project-skills)
 - [Guardrails — the non-negotiables](#guardrails--the-non-negotiables)
 - [You are accountable, not the model](#you-are-accountable-not-the-model)
 - [Where to go next](#where-to-go-next)
@@ -131,6 +132,33 @@ Markdown — read them yourself before running one so you know what to expect.
 > **Why routines?** They give the team a shared vocabulary for common tasks,
 > keep Copilot's behaviour predictable and auditable, and give junior developers
 > a clear model of what's happening rather than a black box.
+
+## Project skills
+
+This repo ships a project-local Copilot plugin (`.github/plugin/`) that
+registers skills specific to `aice-triage-automation`. Skills are richer than
+routines — they are loaded by the Copilot plugin system and can compose other
+skills.
+
+To use a project skill, ask Copilot to invoke it by name:
+
+> _"invoke the project-review skill"_
+
+| Skill            | Plugin              | What it does                                                                         |
+| :--------------- | :------------------ | :----------------------------------------------------------------------------------- |
+| `project-review` | `aice-triage-local` | Full project health check: standards, code quality, docs accuracy, security, hygiene |
+
+**One-time setup:** the plugin must be registered in your local Copilot config.
+After cloning, run:
+
+```bash
+# The CLI reads the plugin from .github/plugin/ automatically once registered.
+# If the skill is not available, ask a team member for the install command,
+# or check docs/first-time-dev-setup.md for the latest onboarding steps.
+```
+
+See `.github/plugin/skills/project-review/SKILL.md` to read exactly what the
+review checks — always worth reading before running it.
 
 ## Guardrails — the non-negotiables
 

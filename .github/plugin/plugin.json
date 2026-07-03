@@ -1,0 +1,13 @@
+{
+  "$schema": "../../schemas/plugin.schema.json",
+  "name": "aice-triage",
+  "description": "Project-local Copilot skills for aice-triage-automation: regular review and health-check routines baked into the repo.",
+  "version": "0.1.0",
+  "author": {
+    "name": "DEFRA AICE",
+    "email": "AICapabilitiesEnablement@defra.gov.uk"
+  },
+  "license": "OGL-UK-3.0",
+  "keywords": ["defra", "aice", "triage", "hapi", "review"],
+  "skills": ["skills/"]
+}

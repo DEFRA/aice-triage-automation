@@ -76,6 +76,15 @@ execute every step it describes in order. Do not skip steps.
 | :-------------- | :--------------------------------- | :------------------------------------------------ |
 | workspace-reset | `docs/routines/workspace-reset.md` | Clear and rebuild the local environment from zero |
 
+## Project skills
+
+Project-local Copilot skills live in `.github/plugin/skills/`. When asked to
+invoke one, read the corresponding `SKILL.md` and follow it exactly.
+
+| Skill          | File                                            | When to use                               |
+| :------------- | :---------------------------------------------- | :---------------------------------------- |
+| project-review | `.github/plugin/skills/project-review/SKILL.md` | Full project health and consistency check |
+
 ## Git workflow
 
 - **Never commit directly to `main`.** Work on a feature branch named for the
