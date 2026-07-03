@@ -130,7 +130,7 @@ Markdown — read them yourself before running one so you know what to expect.
 | workspace-reset | "run the workspace-reset routine" | Clear and rebuild the local environment from zero |
 
 > **Why routines?** They give the team a shared vocabulary for common tasks,
-> keep Copilot's behaviour predictable and auditable, and give junior developers
+> keep Copilot's behaviour predictable and auditable, and give onboarding developers
 > a clear model of what's happening rather than a black box.
 
 ## Project skills
@@ -144,9 +144,11 @@ To use a project skill, ask Copilot to invoke it by name:
 
 > _"invoke the project-review skill"_
 
-| Skill            | Plugin              | What it does                                                                         |
-| :--------------- | :------------------ | :----------------------------------------------------------------------------------- |
-| `project-review` | `aice-triage-local` | Full project health check: standards, code quality, docs accuracy, security, hygiene |
+| Skill            | Plugin              | What it does                                                                                         |
+| :--------------- | :------------------ | :--------------------------------------------------------------------------------------------------- |
+| `project-review` | `aice-triage-local` | Full project health check: standards, code quality, docs accuracy, security, hygiene                 |
+| `pr-setup`       | `aice-triage-local` | Builds a strong PR draft with narrative, reviewer checklist, test/exercise steps, and learning notes |
+| `pr-review`      | `aice-triage-local` | Guides a structured review of an existing PR with risk-based checks, findings, and learning callouts |
 
 **One-time setup:** the plugin must be registered in your local Copilot config.
 After cloning, run:
@@ -170,7 +172,7 @@ Then in a Copilot CLI session:
 /skills list
 ```
 
-You should see `project-review` in the skills list.
+You should see `project-review`, `pr-setup`, and `pr-review` in the skills list.
 
 > **Troubleshooting:** pass the marketplace directory path, not
 > `marketplace.json`. If you pass a relative path that looks like `owner/repo`,

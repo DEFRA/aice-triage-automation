@@ -81,9 +81,11 @@ execute every step it describes in order. Do not skip steps.
 Project-local Copilot skills live in `.github/plugin/skills/`. When asked to
 invoke one, read the corresponding `SKILL.md` and follow it exactly.
 
-| Skill          | File                                            | When to use                               |
-| :------------- | :---------------------------------------------- | :---------------------------------------- |
-| project-review | `.github/plugin/skills/project-review/SKILL.md` | Full project health and consistency check |
+| Skill          | File                                            | When to use                                                         |
+| :------------- | :---------------------------------------------- | :------------------------------------------------------------------ |
+| project-review | `.github/plugin/skills/project-review/SKILL.md` | Full project health and consistency check                           |
+| pr-setup       | `.github/plugin/skills/pr-setup/SKILL.md`       | Prepare a high-quality PR with clear reviewer guidance              |
+| pr-review      | `.github/plugin/skills/pr-review/SKILL.md`      | Review an existing PR with a structured, learning-focused checklist |
 
 ## Git workflow
 

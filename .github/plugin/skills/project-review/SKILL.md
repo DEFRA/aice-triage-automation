@@ -1,6 +1,6 @@
 ---
 name: project-review
-description: Run a comprehensive health review of the aice-triage-automation project. Covers standards adherence, code quality, architectural consistency, documentation accuracy, security, and housekeeping — with callouts for areas a junior developer should study.
+description: Run a comprehensive health review of the aice-triage-automation project. Covers standards adherence, code quality, architectural consistency, documentation accuracy, security, and housekeeping — with callouts for areas an onboarding developer should study.
 license: OGL-UK-3.0
 ---
 
@@ -12,7 +12,7 @@ section below in order. For each finding use one of these markers:
 - ✅ **Good** — conforms; worth noting as a positive pattern
 - ⚠️ **Attention** — minor issue or improvement opportunity
 - ❌ **Fix** — should be addressed before the next release
-- 📚 **Study** — a file or pattern a junior developer should read and understand
+- 📚 **Study** — a file or pattern an onboarding developer should read and understand
 
 Present findings as a structured report:
 
@@ -90,9 +90,9 @@ Read all files under `src/`.
 - Are similar patterns (error handling, response shapes, service calls) handled
   the same way throughout?
 
-### 📚 Junior developer highlights
+### 📚 Onboarding developer highlights
 
-Call out 2–3 specific files or short code patterns that a junior developer
+Call out 2–3 specific files or short code patterns that an onboarding developer
 should read carefully before writing new code. For each, explain briefly:
 
 - What it demonstrates
