@@ -94,6 +94,21 @@ npm run git:hooks
 npm run verify:git-hooks
 ```
 
+If you use GitHub Copilot CLI and want project-local skills (for example
+`project-review`), register the local plugin marketplace once:
+
+```bash
+copilot plugin marketplace add /absolute/path/to/aice-triage-automation/.github/plugin
+copilot plugin install aice-triage@aice-triage-local
+```
+
+Then verify in an interactive Copilot session:
+
+```text
+/skills reload
+/skills list
+```
+
 ---
 
 ## 3. Start MongoDB

@@ -152,13 +152,38 @@ To use a project skill, ask Copilot to invoke it by name:
 After cloning, run:
 
 ```bash
-# The CLI reads the plugin from .github/plugin/ automatically once registered.
-# If the skill is not available, ask a team member for the install command,
-# or check docs/first-time-dev-setup.md for the latest onboarding steps.
+copilot plugin marketplace add /absolute/path/to/aice-triage-automation/.github/plugin
+copilot plugin install aice-triage@aice-triage-local
 ```
+
+For example:
+
+```bash
+copilot plugin marketplace add /Users/rdns/code/defra/aice-triage-automation/.github/plugin
+copilot plugin install aice-triage@aice-triage-local
+```
+
+Then in a Copilot CLI session:
+
+```text
+/skills reload
+/skills list
+```
+
+You should see `project-review` in the skills list.
+
+> **Troubleshooting:** pass the marketplace directory path, not
+> `marketplace.json`. If you pass a relative path that looks like `owner/repo`,
+> Copilot may try to clone it from GitHub instead of reading it locally.
 
 See `.github/plugin/skills/project-review/SKILL.md` to read exactly what the
 review checks — always worth reading before running it.
+
+> **Adoption note:** we should consider promoting `project-review` into the
+> shared [DEFRA/defra-ai-plugins](https://github.com/DEFRA/defra-ai-plugins)
+> marketplace so other Defra services can install and reuse it. Until then,
+> contributors to this repo should consider installing the local
+> `aice-triage-local` plugin so the skill is available in day-to-day work.
 
 ## Guardrails — the non-negotiables
 
