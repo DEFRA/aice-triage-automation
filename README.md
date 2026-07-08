@@ -78,6 +78,11 @@ nvm use
 > [First-Time Dev Setup guide](./docs/first-time-dev-setup.md) for a step-by-step
 > walkthrough (install → MongoDB → `npm run dev` → tests) and an explanation of
 > the dev-mode tooling.
+>
+> **Working with GitHub Copilot?** See
+> [How we use Copilot here](./docs/using-copilot.md) for how AI assistance fits
+> into our SDLC, the guardrails, and a worked feature loop. The repo ships
+> Copilot context in [`.github/copilot-instructions.md`](./.github/copilot-instructions.md).
 
 ### Setup
 
@@ -85,14 +90,19 @@ Install application dependencies:
 
 ```bash
 npm install
+npm run setup:first-time
 ```
+
+`setup:first-time` installs Husky hooks and verifies Git is configured with
+`core.hooksPath=.husky/_`.
 
 ### Git hooks
 
-Install Git hooks (optional, one-time per clone):
+Install or repair git hooks:
 
 ```bash
-npm run setup:husky
+npm run git:hooks
+npm run verify:git-hooks
 ```
 
 Run the same checks manually as the pre-commit hook:

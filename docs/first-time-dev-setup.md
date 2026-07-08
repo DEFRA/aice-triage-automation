@@ -78,10 +78,35 @@ This installs ~520 packages. A clean install should report `found 0
 vulnerabilities`. No `.env` file is required to start — every config value has a
 sensible default (see [section 5](#5-configuration-and-the-env-file)).
 
-Optionally install the git hooks (runs format/lint/test before commits):
+Run the first-time setup helper to install and verify git hooks:
 
 ```bash
-npm run setup:husky
+npm run setup:first-time
+```
+
+This runs `git:hooks` and then `verify:git-hooks` to confirm Husky is
+configured (`core.hooksPath=.husky/_`) and the pre-commit hook is present.
+
+If you ever need to repair hooks manually, run:
+
+```bash
+npm run git:hooks
+npm run verify:git-hooks
+```
+
+If you use GitHub Copilot CLI and want project-local skills (for example
+`project-review`), register the local plugin marketplace once:
+
+```bash
+copilot plugin marketplace add /absolute/path/to/aice-triage-automation/.github/plugin
+copilot plugin install aice-triage@aice-triage-local
+```
+
+Then verify in an interactive Copilot session:
+
+```text
+/skills reload
+/skills list
 ```
 
 ---

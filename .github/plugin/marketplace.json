@@ -1,0 +1,19 @@
+{
+  "name": "aice-triage-local",
+  "owner": {
+    "name": "DEFRA AICE",
+    "email": "AICapabilitiesEnablement@defra.gov.uk"
+  },
+  "metadata": {
+    "description": "Project-local Copilot skills for aice-triage-automation.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "aice-triage",
+      "description": "Project-local Copilot skills for aice-triage-automation: regular review and health-check routines baked into the repo.",
+      "version": "0.1.0",
+      "source": "."
+    }
+  ]
+}
