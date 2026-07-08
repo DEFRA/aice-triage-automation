@@ -126,6 +126,38 @@ export const config = convict({
       default: 'x-cdp-request-id',
       env: 'TRACING_HEADER'
     }
+  },
+  scoringEngine: {
+    doc: 'Which scoring engine to use: the offline stub or Amazon Bedrock',
+    format: ['stub', 'bedrock'],
+    default: 'stub',
+    env: 'SCORING_ENGINE'
+  },
+  bedrock: {
+    region: {
+      doc: 'AWS region for Amazon Bedrock. eu-west-2 is London',
+      format: String,
+      default: 'eu-west-2',
+      env: 'BEDROCK_REGION'
+    },
+    scoreModelId: {
+      doc: 'Bedrock model identifier used for the scoring call',
+      format: String,
+      default: '',
+      env: 'BEDROCK_SCORE_MODEL_ID'
+    },
+    classifyModelId: {
+      doc: 'Bedrock model identifier used for the classification call',
+      format: String,
+      default: '',
+      env: 'BEDROCK_CLASSIFY_MODEL_ID'
+    }
+  },
+  submissionsDir: {
+    doc: 'Local directory of example triage submissions. Git-ignored — real submissions are never committed',
+    format: String,
+    default: '.local/submissions',
+    env: 'SUBMISSIONS_DIR'
   }
 })
 
