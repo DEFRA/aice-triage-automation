@@ -25,7 +25,8 @@
     "start": "NODE_ENV=production node . --env-file-if-exists=.env",
     "test": "TZ=UTC vitest run --coverage",
     "test:watch": "TZ=UTC vitest",
-    "verify:git-hooks": "node ./scripts/verify-git-hooks.js"
+    "verify:git-hooks": "node ./scripts/verify-git-hooks.js",
+    "model:hello": "node --env-file-if-exists=.env scripts/model-hello.js"
   },
   "imports": {
     "#/*": "./src/*"
@@ -41,6 +42,7 @@
     "@elastic/ecs-pino-format": "1.5.0",
     "@hapi/boom": "10.0.1",
     "@hapi/hapi": "21.4.9",
+    "@strands-agents/sdk": "1.7.0",
     "aws4": "1.13.2",
     "convict": "6.2.5",
     "convict-format-with-validator": "6.2.0",
