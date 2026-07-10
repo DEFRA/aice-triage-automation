@@ -37,6 +37,8 @@ try {
     structuredOutputSchema: greetingSchema
   })
 
+  // Structured output is validated as a tool call; >1 turn allows retry if
+  // the first schema attempt fails (turns: 1 can return no structuredOutput).
   const result = await agent.invoke('Greet me in Welsh.', {
     limits: { turns: 3 }
   })

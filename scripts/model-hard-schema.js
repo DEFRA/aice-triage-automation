@@ -38,6 +38,7 @@ try {
     structuredOutputSchema: hardSchema
   })
 
+  //4 turns for extra retry headroom a safety margin to reduce false failures during experiments.
   const result = await agent.invoke(
     'Greet me in Welsh with a 3-character country code.',
     {
