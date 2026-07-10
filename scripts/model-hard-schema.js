@@ -38,9 +38,12 @@ try {
     structuredOutputSchema: hardSchema
   })
 
-  const result = await agent.invoke('Greet me in Welsh with a 3-character country code.', {
-    limits: { turns: 4 }
-  })
+  const result = await agent.invoke(
+    'Greet me in Welsh with a 3-character country code.',
+    {
+      limits: { turns: 4 }
+    }
+  )
 
   if (!result.structuredOutput) {
     throw new Error(

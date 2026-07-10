@@ -27,7 +27,9 @@ const greetingSchema = z.object({
 
 const model = new BedrockModel({ region, modelId, maxTokens: 256 })
 
-console.log(`Calling Bedrock with structured output — model=${modelId}, region=${region} ...`)
+console.log(
+  `Calling Bedrock with structured output — model=${modelId}, region=${region} ...`
+)
 try {
   const agent = new Agent({
     model,
