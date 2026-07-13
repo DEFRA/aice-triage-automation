@@ -1,7 +1,36 @@
+/**
+ * Scoring result schemas for model output (Zod) and service boundary validation (Joi).
+ */
 import Joi from 'joi'
 import { z } from 'zod'
 
 import { CRITERION_KEYS, RAG_VALUES, ROUTING_VALUES } from '#/domain/rubric.js'
+
+/**
+ * @typedef {'red' | 'amber' | 'green'} RagValue
+ */
+
+/**
+ * @typedef {object} CriterionResult
+ * @property {RagValue} rag
+ * @property {string} rubric_band_cited
+ * @property {string} explanation
+ * @property {boolean} missing_evidence
+ */
+
+/**
+ * @typedef {object} ScoringFlags
+ * @property {boolean} access_request
+ * @property {boolean} governance_required
+ * @property {boolean} low_confidence
+ */
+
+/**
+ * @typedef {object} ScoringResult
+ * @property {Record<string, CriterionResult>} criteria
+ * @property {'recommended_pattern' | 'hands_on_session' | 'referral_other_team' | 'refer_ai_unit'} routing_recommendation
+ * @property {ScoringFlags} flags
+ */
 
 const criterionResultZod = z.object({
   rag: z.enum(RAG_VALUES),
