@@ -13,6 +13,27 @@ import { SCORING_SYSTEM_PROMPT } from '#/agents/prompt.js'
  * @param {{ region: string, scoreModelId: string }} bedrockConfig
  * @returns {import('./engine.js').Engine}
  */
+export class ScoringStructuredOutputError extends Error {
+  constructor(stopReason) {
+    super(`scorer produced no structured output (stop=${stopReason})`)
+    this.name = 'ScoringStructuredOutputError'
+    this.stopReason = stopReason
+  }
+}
+export function redactScoringResult(result) {
+  return {
+    ...result,
+    criteria: Object.fromEntries(
+      Object.entries(result.criteria).map(([key, value]) => [
+        key,
+        {
+          ...value,
+          explanation: '[REDACTED]'
+        }
+      ])
+    )
+  }
+}
 export function createBedrockEngine(bedrockConfig) {
   const { region, scoreModelId } = bedrockConfig
 
@@ -35,9 +56,7 @@ export function createBedrockEngine(bedrockConfig) {
       const result = await agent.invoke(text, { limits: { turns: 4 } })
 
       if (!result.structuredOutput) {
-        throw new Error(
-          `scorer produced no structured output (stop=${result.stopReason})`
-        )
+        throw new ScoringStructuredOutputError(result.stopReason)
       }
 
       return result.structuredOutput

@@ -14,7 +14,8 @@ vi.mock('@strands-agents/sdk', () => ({
   }
 }))
 
-const { createBedrockEngine } = await import('#/agents/engine-bedrock.js')
+const { createBedrockEngine, redactScoringResult } =
+  await import('#/agents/engine-bedrock.js')
 
 const config = {
   region: 'eu-west-2',
@@ -58,7 +59,10 @@ describe('#agents/engine-bedrock', () => {
 
     const engine = createBedrockEngine(config)
 
-    await expect(engine.score('some text')).rejects.toThrow('max_tokens')
+    await expect(engine.score('some text')).rejects.toMatchObject({
+      name: 'ScoringStructuredOutputError',
+      stopReason: 'max_tokens'
+    })
   })
 
   test('AC5: a fresh Agent is created per score() call', async () => {
@@ -73,5 +77,43 @@ describe('#agents/engine-bedrock', () => {
 
     expect(agentInstances).toHaveLength(2)
     expect(mockInvoke).toHaveBeenCalledTimes(2)
+  })
+
+  test('redacts explanations in scoring output', () => {
+    const input = {
+      criteria: {
+        business_value: {
+          rag: 'amber',
+          rubric_band_cited: 'Real problem, AI value not quantified',
+          explanation: 'Some detailed model text',
+          missing_evidence: true
+        }
+      },
+      routing_recommendation: 'hands_on_session',
+      flags: {
+        access_request: false,
+        governance_required: false,
+        low_confidence: false
+      }
+    }
+
+    const redacted = redactScoringResult(input)
+
+    expect(redacted).toEqual({
+      criteria: {
+        business_value: {
+          rag: 'amber',
+          rubric_band_cited: 'Real problem, AI value not quantified',
+          explanation: '[REDACTED]',
+          missing_evidence: true
+        }
+      },
+      routing_recommendation: 'hands_on_session',
+      flags: {
+        access_request: false,
+        governance_required: false,
+        low_confidence: false
+      }
+    })
   })
 })
