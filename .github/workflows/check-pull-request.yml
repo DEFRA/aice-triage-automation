@@ -39,6 +39,22 @@ jobs:
           set +e
           docker build --no-cache --tag cdp-node-backend-template .
           exit $?
+          
+      - name: Bedrock classify integration
+        if: vars.RUN_BEDROCK_INTEGRATION == 'true'
+        env:
+          RUN_BEDROCK_INTEGRATION: 'true'
+          BEDROCK_REGION: eu-west-2
+          BEDROCK_CLASSIFY_MODEL_ID: ${{ vars.BEDROCK_CLASSIFY_MODEL_ID }}
+          AWS_BEARER_TOKEN_BEDROCK: ${{ secrets.AWS_BEARER_TOKEN_BEDROCK }}
+        run: npx vitest run tests/integration/engine-bedrock.classify.integration.test.js
+
+      - name: Upload acceptance logs
+        if: vars.RUN_BEDROCK_INTEGRATION == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: acceptance-logs
+          path: acceptance-logs/
 
 #      - name: SonarCloud Scan
 #        if: github.actor != 'dependabot[bot]'
