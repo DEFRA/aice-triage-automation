@@ -1,0 +1,3 @@
+We want to explore using a large language model to help caseworkers summarise lengthy
+environmental compliance reports. The team processes around 200 reports per week and
+the manual effort is significant.

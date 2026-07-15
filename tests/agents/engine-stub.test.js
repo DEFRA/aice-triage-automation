@@ -3,7 +3,7 @@ import { describe, test, expect, vi } from 'vitest'
 
 import { createStubEngine } from '#/agents/engine-stub.js'
 import { CRITERION_KEYS } from '#/domain/rubric.js'
-import { scoringResultJoi } from '#/domain/scoring-schema.js'
+import { classificationZod, scoringResultJoi } from '#/domain/scoring-schema.js'
 
 async function readFixture(name) {
   const path = new URL(`../fixtures/submissions/${name}`, import.meta.url)
@@ -11,7 +11,7 @@ async function readFixture(name) {
 }
 
 describe('#agents/engine-stub', () => {
-  test('AC1: createStubEngine returns object with name and score', () => {
+  test('CreateStubEngine returns object with name and score', () => {
     const engine = createStubEngine()
 
     expect(engine).toBeDefined()
@@ -19,7 +19,7 @@ describe('#agents/engine-stub', () => {
     expect(typeof engine.score).toBe('function')
   })
 
-  test('AC2: score makes no network call', async () => {
+  test('Score makes no network call', async () => {
     const engine = createStubEngine()
     const fetchSpy = vi.spyOn(globalThis, 'fetch')
 
@@ -30,7 +30,7 @@ describe('#agents/engine-stub', () => {
     fetchSpy.mockRestore()
   })
 
-  test('AC3: score is deterministic for same input', async () => {
+  test('Score is deterministic for same input', async () => {
     const engine = createStubEngine()
     const text = await readFixture('non-governance.txt')
 
@@ -40,7 +40,7 @@ describe('#agents/engine-stub', () => {
     expect(first).toEqual(second)
   })
 
-  test('AC4: stub output passes scoringResultJoi', async () => {
+  test('Stub output passes scoringResultJoi', async () => {
     const engine = createStubEngine()
     const text = await readFixture('non-governance.txt')
 
@@ -50,7 +50,7 @@ describe('#agents/engine-stub', () => {
     expect(error).toBeUndefined()
   })
 
-  test('AC5: output has exactly one entry per rubric criterion key', async () => {
+  test('Output has exactly one entry per rubric criterion key', async () => {
     const engine = createStubEngine()
     const text = await readFixture('non-governance.txt')
 
@@ -61,7 +61,7 @@ describe('#agents/engine-stub', () => {
     expect([...keys].sort()).toEqual([...CRITERION_KEYS].sort())
   })
 
-  test('AC6: governance input sets governance flag and refer_ai_unit routing', async () => {
+  test('Governance input sets governance flag and refer_ai_unit routing', async () => {
     const engine = createStubEngine()
     const text = await readFixture('governance.txt')
 
@@ -71,7 +71,7 @@ describe('#agents/engine-stub', () => {
     expect(result.routing_recommendation).toBe('refer_ai_unit')
   })
 
-  test('AC6: non-governance input clears governance flag and uses hands_on_session', async () => {
+  test('Non-governance input clears governance flag and uses hands_on_session', async () => {
     const engine = createStubEngine()
     const text = await readFixture('non-governance.txt')
 
@@ -79,5 +79,40 @@ describe('#agents/engine-stub', () => {
 
     expect(result.flags.governance_required).toBe(false)
     expect(result.routing_recommendation).toBe('hands_on_session')
+  })
+
+  test('CreateStubEngine returns object with classify', () => {
+    const engine = createStubEngine()
+    expect(typeof engine.classify).toBe('function')
+  })
+  test('Access-request fixture classified as access_request and passes classificationZod', async () => {
+    const engine = createStubEngine()
+    const text = await readFixture('access-request.txt')
+
+    const result = await engine.classify(text)
+
+    expect(result.kind).toBe('access_request')
+    expect(classificationZod.safeParse(result).success).toBe(true)
+  })
+
+  test('Opportunity fixture classified as opportunity and passes classificationZod', async () => {
+    const engine = createStubEngine()
+    const text = await readFixture('opportunity.txt')
+
+    const result = await engine.classify(text)
+
+    expect(result.kind).toBe('opportunity')
+    expect(classificationZod.safeParse(result).success).toBe(true)
+  })
+
+  test('Classify makes no network call', async () => {
+    const engine = createStubEngine()
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+    const text = await readFixture('opportunity.txt')
+
+    await engine.classify(text)
+
+    expect(fetchSpy).not.toHaveBeenCalled()
+    fetchSpy.mockRestore()
   })
 })
