@@ -39,6 +39,20 @@ export function createStubEngine() {
           low_confidence: false
         }
       }
+    },
+
+    async classify(text) {
+      const emailCount = (text.match(/@[\w.-]+\.[a-z]{2,}/gi) ?? []).length
+      const wantsTooling =
+        /\bcopilot\b/i.test(text) && /(licen[sc]e|access)/i.test(text)
+      const isAccessRequest = wantsTooling && emailCount >= 2
+
+      return {
+        kind: isAccessRequest ? 'access_request' : 'opportunity',
+        reason: isAccessRequest
+          ? 'Asks for tool licences or access for a named team (stub heuristic).'
+          : 'Describes an AI use case to triage (stub heuristic).'
+      }
     }
   }
 }

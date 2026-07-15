@@ -1,0 +1,3 @@
+Hi team, we would like to request GitHub Copilot licences for the following developers:
+alice@example.gov.uk, bob@example.gov.uk, carol@example.gov.uk
+Please grant access as soon as possible.

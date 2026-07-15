@@ -32,6 +32,20 @@ import { CRITERION_KEYS, RAG_VALUES, ROUTING_VALUES } from '#/domain/rubric.js'
  * @property {ScoringFlags} flags
  */
 
+/**
+ * @typedef {'opportunity' | 'access_request'} ClassificationKind
+ */
+
+/**
+ * @typedef {object} Classification
+ * @property {ClassificationKind} kind
+ * @property {string} reason
+ */
+
+export const classificationZod = z.object({
+  kind: z.enum(['opportunity', 'access_request']),
+  reason: z.string().min(1)
+})
 const criterionResultZod = z.object({
   rag: z.enum(RAG_VALUES),
   rubric_band_cited: z.string().min(1),

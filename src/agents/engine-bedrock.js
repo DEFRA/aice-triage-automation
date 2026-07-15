@@ -1,7 +1,10 @@
 import { Agent, BedrockModel } from '@strands-agents/sdk'
 
-import { scoringResultZod } from '#/domain/scoring-schema.js'
-import { SCORING_SYSTEM_PROMPT } from '#/agents/prompt.js'
+import { classificationZod, scoringResultZod } from '#/domain/scoring-schema.js'
+import {
+  CLASSIFIER_SYSTEM_PROMPT,
+  SCORING_SYSTEM_PROMPT
+} from '#/agents/prompt.js'
 
 /**
  * Real engine: a Strands agent over Amazon Bedrock.
@@ -20,6 +23,13 @@ export class ScoringStructuredOutputError extends Error {
     this.stopReason = stopReason
   }
 }
+export class ClassificationStructuredOutputError extends Error {
+  constructor(stopReason) {
+    super(`classifier produced no structured output (stop=${stopReason})`)
+    this.name = 'ClassificationStructuredOutputError'
+    this.stopReason = stopReason
+  }
+}
 export function redactScoringResult(result) {
   return {
     ...result,
@@ -35,12 +45,18 @@ export function redactScoringResult(result) {
   }
 }
 export function createBedrockEngine(bedrockConfig) {
-  const { region, scoreModelId } = bedrockConfig
+  const { region, scoreModelId, classifyModelId } = bedrockConfig
 
   const scoreModel = new BedrockModel({
     region,
     modelId: scoreModelId,
     maxTokens: 4096
+  })
+
+  const classifyModel = new BedrockModel({
+    region,
+    modelId: classifyModelId,
+    maxTokens: 512
   })
 
   return {
@@ -57,6 +73,21 @@ export function createBedrockEngine(bedrockConfig) {
 
       if (!result.structuredOutput) {
         throw new ScoringStructuredOutputError(result.stopReason)
+      }
+      return result.structuredOutput
+    },
+
+    async classify(text) {
+      const agent = new Agent({
+        model: classifyModel,
+        systemPrompt: CLASSIFIER_SYSTEM_PROMPT,
+        structuredOutputSchema: classificationZod
+      })
+
+      const result = await agent.invoke(text, { limits: { turns: 3 } })
+
+      if (!result.structuredOutput) {
+        throw new ClassificationStructuredOutputError(result.stopReason)
       }
 
       return result.structuredOutput

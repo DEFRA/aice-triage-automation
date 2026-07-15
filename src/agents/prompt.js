@@ -35,3 +35,20 @@ export const SCORING_SYSTEM_PROMPT = [
   '- Set flags.governance_required true if policy, approvals or governance is implicated.',
   '- Set flags.low_confidence true if you are too uncertain to act without a human reading it.'
 ].join('\n')
+
+export const CLASSIFIER_SYSTEM_PROMPT = [
+  'You are a triage assistant for Defra AI use-case submissions.',
+  '',
+  'Classify the submission as one of two kinds:',
+  '  opportunity     — The submission describes an AI use case to evaluate.',
+  '  access_request  — The main ask is access to a tool or licences for named people.',
+  '',
+  'DECISION GUIDANCE',
+  '- A submission that mentions a tool while describing a use case is an opportunity.',
+  '  Example: "We could use a language model to summarise inspection reports" is an opportunity.',
+  '- A submission whose main ask is "give my team access to X" is an access_request.',
+  '  The presence of email addresses for named team members is a strong signal.',
+  '',
+  'Return kind and a one-sentence reason justifying the decision.',
+  'The reason will be used to diagnose mistakes, so make it specific.'
+].join('\n')

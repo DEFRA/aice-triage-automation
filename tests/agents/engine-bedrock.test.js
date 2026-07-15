@@ -19,7 +19,8 @@ const { createBedrockEngine, redactScoringResult } =
 
 const config = {
   region: 'eu-west-2',
-  scoreModelId: 'anthropic.claude-3-7-sonnet-20250219-v1:0'
+  scoreModelId: 'anthropic.claude-3-7-sonnet-20250219-v1:0',
+  classifyModelId: 'anthropic.claude-3-haiku-20240307-v1:0'
 }
 
 beforeEach(() => {
@@ -35,7 +36,7 @@ describe('#agents/engine-bedrock', () => {
     expect(typeof engine.score).toBe('function')
   })
 
-  test('AC5: Agent is constructed with structuredOutputSchema', async () => {
+  test('Agent is constructed with structuredOutputSchema', async () => {
     mockInvoke.mockResolvedValue({
       structuredOutput: { criteria: {} },
       stopReason: 'end_turn'
@@ -51,7 +52,7 @@ describe('#agents/engine-bedrock', () => {
     expect(agentInstances[0]._options.systemPrompt).toBe(SCORING_SYSTEM_PROMPT)
   })
 
-  test('AC4 + AC5: missing structuredOutput throws named error quoting stopReason', async () => {
+  test('Missing structuredOutput throws named error quoting stopReason', async () => {
     mockInvoke.mockResolvedValue({
       structuredOutput: null,
       stopReason: 'max_tokens'
@@ -65,7 +66,7 @@ describe('#agents/engine-bedrock', () => {
     })
   })
 
-  test('AC5: a fresh Agent is created per score() call', async () => {
+  test('A fresh Agent is created per score() call', async () => {
     mockInvoke.mockResolvedValue({
       structuredOutput: { criteria: {} },
       stopReason: 'end_turn'
@@ -79,7 +80,7 @@ describe('#agents/engine-bedrock', () => {
     expect(mockInvoke).toHaveBeenCalledTimes(2)
   })
 
-  test('redacts explanations in scoring output', () => {
+  test('Redacts explanations in scoring output', () => {
     const input = {
       criteria: {
         business_value: {
@@ -115,5 +116,47 @@ describe('#agents/engine-bedrock', () => {
         low_confidence: false
       }
     })
+  })
+  test('Missing structuredOutput from classify throws ClassificationStructuredOutputError', async () => {
+    mockInvoke.mockResolvedValue({
+      structuredOutput: null,
+      stopReason: 'max_tokens'
+    })
+
+    const engine = createBedrockEngine({
+      region: 'eu-west-2',
+      scoreModelId: 'anthropic.claude-3-7-sonnet-20250219-v1:0',
+      classifyModelId: 'anthropic.claude-3-haiku-20240307-v1:0'
+    })
+
+    await expect(engine.classify('some text')).rejects.toMatchObject({
+      name: 'ClassificationStructuredOutputError',
+      stopReason: 'max_tokens'
+    })
+  })
+
+  test('Classify uses classifyModel, not scoreModel', async () => {
+    mockInvoke.mockResolvedValue({
+      structuredOutput: { kind: 'opportunity', reason: 'test' },
+      stopReason: 'end_turn'
+    })
+
+    const engine = createBedrockEngine({
+      region: 'eu-west-2',
+      scoreModelId: 'score-model-id',
+      classifyModelId: 'classify-model-id'
+    })
+    await engine.classify('some text')
+    const classifyAgentModel = agentInstances[0]._options.model
+
+    mockInvoke.mockResolvedValue({
+      structuredOutput: { criteria: {} },
+      stopReason: 'end_turn'
+    })
+
+    await engine.score('some text')
+    const scoreAgentModel = agentInstances[1]._options.model
+
+    expect(classifyAgentModel).not.toBe(scoreAgentModel)
   })
 })
