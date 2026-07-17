@@ -12,7 +12,7 @@ import { join, basename } from 'node:path'
  * @param {string} raw
  * @returns {string}
  */
-function stripBoilerplate(raw) {
+export function stripBoilerplate(raw) {
   return raw.replace(/\n+Reply within \d+ working days[\s\S]*/i, '').trim()
 }
 
