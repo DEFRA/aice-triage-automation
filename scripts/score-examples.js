@@ -1,3 +1,8 @@
+// Required env vars for SCORING_ENGINE=bedrock:
+//   BEDROCK_SCORE_MODEL_ID     — Bedrock model ID for scoring
+//   BEDROCK_CLASSIFY_MODEL_ID  — Bedrock model ID for classification
+//   AWS_BEARER_TOKEN_BEDROCK   — API key (read natively by the AWS SDK)
+
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
@@ -5,6 +10,21 @@ import { config } from '#/config.js'
 import { chooseEngine } from '#/agents/choose-engine.js'
 import { loadSubmissions } from '#/domain/submission.js'
 import { scoreSubmission } from '#/services/score-submission.js'
+
+if (process.env.SCORING_ENGINE === 'bedrock') {
+  if (!process.env.BEDROCK_SCORE_MODEL_ID) {
+    console.error('BEDROCK_SCORE_MODEL_ID is not set. Add it to .env')
+    process.exit(2)
+  }
+  if (!process.env.BEDROCK_CLASSIFY_MODEL_ID) {
+    console.error('BEDROCK_CLASSIFY_MODEL_ID is not set. Add it to .env')
+    process.exit(2)
+  }
+  if (!process.env.AWS_BEARER_TOKEN_BEDROCK) {
+    console.error('AWS_BEARER_TOKEN_BEDROCK is not set. Add it to .env')
+    process.exit(2)
+  }
+}
 
 const engine = chooseEngine()
 const dir = config.get('submissionsDir')
