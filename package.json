@@ -26,7 +26,8 @@
     "test": "TZ=UTC vitest run --coverage",
     "test:watch": "TZ=UTC vitest",
     "verify:git-hooks": "node ./scripts/verify-git-hooks.js",
-    "model:hello": "node --env-file-if-exists=.env scripts/model-hello.js"
+    "model:hello": "node --env-file-if-exists=.env scripts/model-hello.js",
+    "score:examples": "node --env-file-if-exists=.env scripts/score-examples.js"
   },
   "imports": {
     "#/*": "./src/*"
