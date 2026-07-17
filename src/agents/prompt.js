@@ -1,13 +1,9 @@
-import { CRITERIA, READING_PATTERNS } from '#/domain/rubric.js'
+import { CRITERIA } from '#/domain/rubric.js'
 
 const criteria = CRITERIA.map(
   (criterion, index) =>
     `${index + 1}. ${criterion.name} (key: "${criterion.key}") — ${criterion.whatToLookAt}.\n` +
     `   Red: ${criterion.red}\n   Amber: ${criterion.amber}\n   Green: ${criterion.green}`
-).join('\n')
-
-const readingPatterns = READING_PATTERNS.map(
-  (pattern, index) => `${index + 1}. ${pattern}`
 ).join('\n')
 
 export const SCORING_SYSTEM_PROMPT = [
@@ -16,8 +12,11 @@ export const SCORING_SYSTEM_PROMPT = [
   'CRITERIA',
   criteria,
   '',
-  'ROUTING READING PATTERNS',
-  readingPatterns,
+  'ROUTING RULES',
+  '- recommended_pattern: majority green, clear AI fit, stable process, submission demonstrates the case is already well-shaped for AI delivery.',
+  '- hands_on_session: mixed amber across criteria, the idea is sound but needs development support to become ready.',
+  '- referral_other_team: the problem is real but AI is not the right fit, or another Defra team is better placed to build it.',
+  '- refer_ai_unit: policy, approvals, governance, or procurement is implicated — regardless of other scores.',
   '',
   'CALIBRATION GUIDANCE',
   '- The AI-specific benefit case is rarely quantified when a submission first arrives. It usually lands amber, not green. Do not award green without a quantified case.',
@@ -48,6 +47,9 @@ export const CLASSIFIER_SYSTEM_PROMPT = [
   '  Example: "We could use a language model to summarise inspection reports" is an opportunity.',
   '- A submission whose main ask is "give my team access to X" is an access_request.',
   '  The presence of email addresses for named team members is a strong signal.',
+  '- A submission that describes a risk or opportunity and mentions being blocked on a tool is still an opportunity.',
+  '  The main ask is the investigation, not the access.',
+  '  Only classify as access_request when the primary purpose of the submission is obtaining tool licences or access for named people.',
   '',
   'Return kind and a one-sentence reason justifying the decision.',
   'The reason will be used to diagnose mistakes, so make it specific.'
