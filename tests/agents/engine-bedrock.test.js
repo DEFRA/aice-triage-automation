@@ -4,9 +4,13 @@ import { SCORING_SYSTEM_PROMPT } from '#/agents/prompt.js'
 
 const mockInvoke = vi.fn()
 const agentInstances = []
+const bedrockModelInstances = []
 
 vi.mock('@strands-agents/sdk', () => ({
-  BedrockModel: function BedrockModel() {},
+  BedrockModel: function BedrockModel(options) {
+    this._options = options
+    bedrockModelInstances.push(this)
+  },
   Agent: function Agent(options) {
     this._options = options
     this.invoke = mockInvoke
@@ -26,12 +30,12 @@ const config = {
 beforeEach(() => {
   vi.clearAllMocks()
   agentInstances.length = 0
+  bedrockModelInstances.length = 0
 })
 
 describe('#agents/engine-bedrock', () => {
   test('AC1: createBedrockEngine returns object with name and score', () => {
     const engine = createBedrockEngine(config)
-
     expect(engine.name).toBe('bedrock')
     expect(typeof engine.score).toBe('function')
   })
@@ -41,7 +45,6 @@ describe('#agents/engine-bedrock', () => {
       structuredOutput: { criteria: {} },
       stopReason: 'end_turn'
     })
-
     const engine = createBedrockEngine(config)
     await engine.score('some text')
 
@@ -57,7 +60,6 @@ describe('#agents/engine-bedrock', () => {
       structuredOutput: null,
       stopReason: 'max_tokens'
     })
-
     const engine = createBedrockEngine(config)
 
     await expect(engine.score('some text')).rejects.toMatchObject({
@@ -71,7 +73,6 @@ describe('#agents/engine-bedrock', () => {
       structuredOutput: { criteria: {} },
       stopReason: 'end_turn'
     })
-
     const engine = createBedrockEngine(config)
     await engine.score('first call')
     await engine.score('second call')
@@ -97,7 +98,6 @@ describe('#agents/engine-bedrock', () => {
         low_confidence: false
       }
     }
-
     const redacted = redactScoringResult(input)
 
     expect(redacted).toEqual({
@@ -117,17 +117,13 @@ describe('#agents/engine-bedrock', () => {
       }
     })
   })
+
   test('Missing structuredOutput from classify throws ClassificationStructuredOutputError', async () => {
     mockInvoke.mockResolvedValue({
       structuredOutput: null,
       stopReason: 'max_tokens'
     })
-
-    const engine = createBedrockEngine({
-      region: 'eu-west-2',
-      scoreModelId: 'anthropic.claude-3-7-sonnet-20250219-v1:0',
-      classifyModelId: 'anthropic.claude-3-haiku-20240307-v1:0'
-    })
+    const engine = createBedrockEngine(config)
 
     await expect(engine.classify('some text')).rejects.toMatchObject({
       name: 'ClassificationStructuredOutputError',
@@ -140,12 +136,12 @@ describe('#agents/engine-bedrock', () => {
       structuredOutput: { kind: 'opportunity', reason: 'test' },
       stopReason: 'end_turn'
     })
-
     const engine = createBedrockEngine({
       region: 'eu-west-2',
       scoreModelId: 'score-model-id',
       classifyModelId: 'classify-model-id'
     })
+
     await engine.classify('some text')
     const classifyAgentModel = agentInstances[0]._options.model
 
@@ -156,7 +152,38 @@ describe('#agents/engine-bedrock', () => {
 
     await engine.score('some text')
     const scoreAgentModel = agentInstances[1]._options.model
-
     expect(classifyAgentModel).not.toBe(scoreAgentModel)
+  })
+
+  test('passes guardrailConfig to both BedrockModel clients when configured', () => {
+    createBedrockEngine({
+      region: 'eu-west-2',
+      scoreModelId: 'score-model-id',
+      classifyModelId: 'classify-model-id',
+      guardrailId: 'gr-123',
+      guardrailVersion: '7'
+    })
+    expect(bedrockModelInstances).toHaveLength(2)
+    expect(bedrockModelInstances[0]._options.guardrailConfig).toEqual({
+      guardrailIdentifier: 'gr-123',
+      guardrailVersion: '7'
+    })
+    expect(bedrockModelInstances[1]._options.guardrailConfig).toEqual({
+      guardrailIdentifier: 'gr-123',
+      guardrailVersion: '7'
+    })
+  })
+
+  test('does not pass guardrailConfig when guardrail is not configured', () => {
+    createBedrockEngine({
+      region: 'eu-west-2',
+      scoreModelId: 'score-model-id',
+      classifyModelId: 'classify-model-id',
+      guardrailId: '',
+      guardrailVersion: ''
+    })
+    expect(bedrockModelInstances).toHaveLength(2)
+    expect(bedrockModelInstances[0]._options.guardrailConfig).toBeUndefined()
+    expect(bedrockModelInstances[1]._options.guardrailConfig).toBeUndefined()
   })
 })
