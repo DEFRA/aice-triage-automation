@@ -141,16 +141,28 @@ export const config = convict({
       env: 'BEDROCK_REGION'
     },
     scoreModelId: {
-      doc: 'Bedrock model identifier used for the scoring call',
+      doc: 'Bedrock inference profile ID or ARN (preferred on CDP) or model ID used for the scoring call',
       format: String,
       default: '',
       env: 'BEDROCK_SCORE_MODEL_ID'
     },
     classifyModelId: {
-      doc: 'Bedrock model identifier used for the classification call',
+      doc: 'Bedrock inference profile ID or ARN (preferred on CDP) or model ID used for the classification call',
       format: String,
       default: '',
       env: 'BEDROCK_CLASSIFY_MODEL_ID'
+    },
+    guardrailId: {
+      doc: 'Bedrock guardrail identifier or ARN, applied to every model call. Empty disables the guardrail',
+      format: String,
+      default: '',
+      env: 'BEDROCK_GUARDRAIL_ID'
+    },
+    guardrailVersion: {
+      doc: 'Bedrock guardrail version: a number, or DRAFT for the working copy',
+      format: String,
+      default: '',
+      env: 'BEDROCK_GUARDRAIL_VERSION'
     }
   },
   submissionsDir: {
@@ -162,3 +174,18 @@ export const config = convict({
 })
 
 config.validate({ allowed: 'strict' })
+const guardrailVersion = config.get('bedrock.guardrailVersion')
+
+if (!/^([0-9]{1,8}|DRAFT|)$/.test(guardrailVersion)) {
+  throw new Error(
+    'bedrock.guardrailVersion must be empty, DRAFT, or a number of 1 to 8 digits'
+  )
+}
+if (
+  config.get('bedrock.guardrailId') !== '' &&
+  config.get('bedrock.guardrailVersion') === ''
+) {
+  throw new Error(
+    'bedrock.guardrailVersion must be set when bedrock.guardrailId is set'
+  )
+}

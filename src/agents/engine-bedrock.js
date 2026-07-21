@@ -44,19 +44,27 @@ export function redactScoringResult(result) {
     )
   }
 }
+function toGuardrailConfig({ guardrailId, guardrailVersion }) {
+  if (guardrailId === '') {
+    return undefined
+  }
+  return { guardrailIdentifier: guardrailId, guardrailVersion }
+}
 export function createBedrockEngine(bedrockConfig) {
   const { region, scoreModelId, classifyModelId } = bedrockConfig
 
   const scoreModel = new BedrockModel({
     region,
     modelId: scoreModelId,
-    maxTokens: 4096
+    maxTokens: 4096,
+    guardrailConfig: toGuardrailConfig(bedrockConfig)
   })
 
   const classifyModel = new BedrockModel({
     region,
     modelId: classifyModelId,
-    maxTokens: 512
+    maxTokens: 512,
+    guardrailConfig: toGuardrailConfig(bedrockConfig)
   })
 
   return {
