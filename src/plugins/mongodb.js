@@ -37,10 +37,11 @@ export const mongoDb = {
     }
   }
 }
-
-async function createIndexes(db) {
+export async function createIndexes(db) {
   await db.collection('mongo-locks').createIndex({ id: 1 })
+  await db
+    .collection('submissions')
+    .createIndex({ submissionId: 1 }, { unique: true })
 
-  // Example of how to create a mongodb index. Remove as required
-  await db.collection('example-data').createIndex({ id: 1 })
+  await db.collection('submissions').createIndex({ status: 1 })
 }
