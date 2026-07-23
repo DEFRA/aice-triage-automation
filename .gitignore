@@ -9,6 +9,7 @@ coverage
 .cache
 .eslintcache
 .env
+.env.integration.local
 acceptance-logs/
 .local/
 out/
