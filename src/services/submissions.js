@@ -1,4 +1,5 @@
 const SUBMISSIONS_COLLECTION = 'submissions'
+export const SUBMISSION_STATUSES = ['unprocessed', 'scored']
 
 export async function insertSubmission(
   db,
@@ -31,4 +32,16 @@ export function findSubmission(db, submissionId) {
   return db
     .collection(SUBMISSIONS_COLLECTION)
     .findOne({ submissionId }, { projection: { _id: 0 } })
+}
+export async function markScored(db, submissionId, result) {
+  await db.collection('submissions').updateOne(
+    { submissionId },
+    {
+      $set: {
+        status: 'scored',
+        result,
+        scoredAt: new Date()
+      }
+    }
+  )
 }

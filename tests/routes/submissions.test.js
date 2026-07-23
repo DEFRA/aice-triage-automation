@@ -1,3 +1,15 @@
+vi.mock('#/agents/choose-engine.js', () => ({
+  chooseEngine: vi.fn()
+}))
+
+vi.mock('#/services/score-submission.js', () => ({
+  scoreSubmission: vi.fn()
+}))
+
+import { chooseEngine } from '#/agents/choose-engine.js'
+import { stripBoilerplate } from '#/domain/submission.js'
+import { scoreSubmission } from '#/services/score-submission.js'
+
 describe('#submissions route', () => {
   let server
 
@@ -14,6 +26,9 @@ describe('#submissions route', () => {
 
   beforeEach(async () => {
     await server.db.collection('submissions').deleteMany({})
+    vi.clearAllMocks()
+    chooseEngine.mockReset()
+    scoreSubmission.mockReset()
   })
 
   describe('POST /submissions', () => {
@@ -36,6 +51,7 @@ describe('#submissions route', () => {
       const stored = await server.db
         .collection('submissions')
         .findOne({ submissionId: 'sub-001' })
+
       expect(stored.submittedAt).toBe('2026-07-22T09:15:00.000Z')
       expect(stored.status).toBe('unprocessed')
       expect(stored.receivedAt).toBeInstanceOf(Date)
@@ -57,6 +73,7 @@ describe('#submissions route', () => {
       const firstStored = await server.db
         .collection('submissions')
         .findOne({ submissionId: 'sub-dup-001' })
+
       const secondResponse = await server.inject({
         method: 'POST',
         url: '/submissions',
@@ -80,6 +97,7 @@ describe('#submissions route', () => {
         firstStored.receivedAt.toISOString()
       )
     })
+
     test('returns 400 for an empty payload object', async () => {
       const response = await server.inject({
         method: 'POST',
@@ -129,6 +147,7 @@ describe('#submissions route', () => {
 
       expect(response.statusCode).toBe(400)
     })
+
     test('stores text byte-for-byte, including whitespace and newlines', async () => {
       const exactText =
         ' Keep leading spaces\nLine two with trailing spaces \n\nFinal line '
@@ -151,6 +170,282 @@ describe('#submissions route', () => {
         .findOne({ submissionId: 'sub-raw-001' })
 
       expect(stored.text).toBe(exactText)
+    })
+  })
+
+  describe('GET /submissions', () => {
+    test('returns submissions filtered by status', async () => {
+      await server.db.collection('submissions').insertMany([
+        {
+          submissionId: 'sub-unprocessed-001',
+          text: 'Unprocessed submission',
+          submittedAt: '2026-07-22T09:15:00.000Z',
+          receivedAt: new Date('2026-07-22T09:16:00.000Z'),
+          status: 'unprocessed'
+        },
+        {
+          submissionId: 'sub-scored-001',
+          text: 'Scored submission',
+          submittedAt: '2026-07-22T09:20:00.000Z',
+          receivedAt: new Date('2026-07-22T09:21:00.000Z'),
+          status: 'scored',
+          result: {
+            id: 'sub-scored-001',
+            kind: 'opportunity'
+          },
+          scoredAt: new Date('2026-07-22T09:25:00.000Z')
+        }
+      ])
+
+      const response = await server.inject({
+        method: 'GET',
+        url: '/submissions?status=unprocessed'
+      })
+
+      expect(response.statusCode).toBe(200)
+      expect(response.result).toHaveLength(1)
+      expect(response.result[0].submissionId).toBe('sub-unprocessed-001')
+      expect(response.result[0].status).toBe('unprocessed')
+    })
+
+    test('returns 400 when status query is missing', async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/submissions'
+      })
+
+      expect(response.statusCode).toBe(400)
+    })
+
+    test('returns 400 when status query is invalid', async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/submissions?status=unknown'
+      })
+
+      expect(response.statusCode).toBe(400)
+    })
+  })
+
+  describe('GET /submissions/{submissionId}', () => {
+    test('returns 200 with the submission when it exists', async () => {
+      await server.db.collection('submissions').insertOne({
+        submissionId: 'sub-get-001',
+        text: 'Stored submission',
+        submittedAt: '2026-07-22T09:15:00.000Z',
+        receivedAt: new Date('2026-07-22T09:16:00.000Z'),
+        status: 'unprocessed'
+      })
+
+      const response = await server.inject({
+        method: 'GET',
+        url: '/submissions/sub-get-001'
+      })
+
+      expect(response.statusCode).toBe(200)
+      expect(response.result.submissionId).toBe('sub-get-001')
+      expect(response.result.status).toBe('unprocessed')
+    })
+
+    test('returns 404 when submission does not exist', async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/submissions/not-there'
+      })
+
+      expect(response.statusCode).toBe(404)
+    })
+  })
+
+  describe('POST /submissions/{submissionId}/score', () => {
+    const fakeEngine = { name: 'fake-engine' }
+    const fakeResult = {
+      id: 'sub-001',
+      kind: 'opportunity',
+      reason: 'stub reason',
+      scoring: {
+        criteria: {},
+        routing_recommendation: 'hands_on_session',
+        flags: {
+          access_request: false,
+          governance_required: false,
+          low_confidence: false
+        }
+      }
+    }
+
+    test('AC1: scoring unprocessed submission returns 200 and persists scored state', async () => {
+      await server.db.collection('submissions').insertOne({
+        submissionId: 'sub-001',
+        text: 'We want AI for triage',
+        submittedAt: '2026-07-22T09:15:00.000Z',
+        receivedAt: new Date('2026-07-22T09:16:00.000Z'),
+        status: 'unprocessed'
+      })
+
+      chooseEngine.mockReturnValue(fakeEngine)
+      scoreSubmission.mockResolvedValue(fakeResult)
+
+      const response = await server.inject({
+        method: 'POST',
+        url: '/submissions/sub-001/score'
+      })
+
+      expect(response.statusCode).toBe(200)
+      expect(response.result).toEqual(fakeResult)
+
+      const stored = await server.db
+        .collection('submissions')
+        .findOne({ submissionId: 'sub-001' })
+
+      expect(stored.status).toBe('scored')
+      expect(stored.result).toEqual(fakeResult)
+      expect(stored.scoredAt).toBeInstanceOf(Date)
+    })
+
+    test('AC2: unknown submissionId returns 404', async () => {
+      const response = await server.inject({
+        method: 'POST',
+        url: '/submissions/not-there/score'
+      })
+
+      expect(response.statusCode).toBe(404)
+    })
+
+    test('AC3: already scored returns stored result and does not invoke engine', async () => {
+      const storedResult = {
+        id: 'sub-scored',
+        kind: 'opportunity',
+        reason: 'already scored',
+        scoring: {
+          criteria: {},
+          routing_recommendation: 'hands_on_session',
+          flags: {
+            access_request: false,
+            governance_required: false,
+            low_confidence: false
+          }
+        }
+      }
+
+      await server.db.collection('submissions').insertOne({
+        submissionId: 'sub-scored',
+        text: 'Raw text',
+        submittedAt: '2026-07-22T09:15:00.000Z',
+        receivedAt: new Date('2026-07-22T09:16:00.000Z'),
+        status: 'scored',
+        result: storedResult,
+        scoredAt: new Date('2026-07-22T09:20:00.000Z')
+      })
+
+      const response = await server.inject({
+        method: 'POST',
+        url: '/submissions/sub-scored/score'
+      })
+
+      expect(response.statusCode).toBe(200)
+      expect(response.result).toEqual(storedResult)
+      expect(chooseEngine).not.toHaveBeenCalled()
+      expect(scoreSubmission).not.toHaveBeenCalled()
+    })
+
+    test('AC4: held lock returns 409 and does not invoke engine', async () => {
+      const submissionId = 'sub-locked'
+
+      await server.db.collection('submissions').insertOne({
+        submissionId,
+        text: 'Raw text',
+        submittedAt: '2026-07-22T09:15:00.000Z',
+        receivedAt: new Date('2026-07-22T09:16:00.000Z'),
+        status: 'unprocessed'
+      })
+
+      const heldLock = await server.locker.lock(submissionId)
+      expect(heldLock).toBeTruthy()
+
+      try {
+        const response = await server.inject({
+          method: 'POST',
+          url: '/submissions/sub-locked/score'
+        })
+
+        expect(response.statusCode).toBe(409)
+        expect(chooseEngine).not.toHaveBeenCalled()
+        expect(scoreSubmission).not.toHaveBeenCalled()
+      } finally {
+        await heldLock.free()
+      }
+    })
+
+    test('AC5: score uses stripped text while raw text remains unchanged in DB', async () => {
+      const rawText =
+        'We want to use AI to classify waste.\n\nReply within 5 working days with one of:\na recommended pattern'
+
+      await server.db.collection('submissions').insertOne({
+        submissionId: 'sub-strip',
+        text: rawText,
+        submittedAt: '2026-07-22T09:15:00.000Z',
+        receivedAt: new Date('2026-07-22T09:16:00.000Z'),
+        status: 'unprocessed'
+      })
+
+      chooseEngine.mockReturnValue(fakeEngine)
+      scoreSubmission.mockResolvedValue(fakeResult)
+
+      const response = await server.inject({
+        method: 'POST',
+        url: '/submissions/sub-strip/score'
+      })
+
+      expect(response.statusCode).toBe(200)
+      expect(scoreSubmission).toHaveBeenCalledWith(fakeEngine, {
+        id: 'sub-strip',
+        text: stripBoilerplate(rawText)
+      })
+
+      const stored = await server.db
+        .collection('submissions')
+        .findOne({ submissionId: 'sub-strip' })
+
+      expect(stored.text).toBe(rawText)
+      expect(stored.result).toEqual(fakeResult)
+    })
+
+    test('optional: scoring failure leaves submission unprocessed and lock is released', async () => {
+      await server.db.collection('submissions').insertOne({
+        submissionId: 'sub-fail',
+        text: 'Some raw text',
+        submittedAt: '2026-07-22T09:15:00.000Z',
+        receivedAt: new Date('2026-07-22T09:16:00.000Z'),
+        status: 'unprocessed'
+      })
+
+      chooseEngine.mockReturnValue(fakeEngine)
+      scoreSubmission.mockRejectedValueOnce(new Error('engine failed'))
+
+      const first = await server.inject({
+        method: 'POST',
+        url: '/submissions/sub-fail/score'
+      })
+
+      expect(first.statusCode).toBe(500)
+
+      const afterFail = await server.db
+        .collection('submissions')
+        .findOne({ submissionId: 'sub-fail' })
+
+      expect(afterFail.status).toBe('unprocessed')
+      expect(afterFail.scoredAt).toBeUndefined()
+      expect(afterFail.result).toBeUndefined()
+
+      scoreSubmission.mockResolvedValueOnce(fakeResult)
+
+      const second = await server.inject({
+        method: 'POST',
+        url: '/submissions/sub-fail/score'
+      })
+
+      expect(second.statusCode).toBe(200)
     })
   })
 })
