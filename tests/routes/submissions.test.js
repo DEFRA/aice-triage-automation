@@ -173,6 +173,90 @@ describe('#submissions route', () => {
     })
   })
 
+  describe('GET /submissions', () => {
+    test('returns submissions filtered by status', async () => {
+      await server.db.collection('submissions').insertMany([
+        {
+          submissionId: 'sub-unprocessed-001',
+          text: 'Unprocessed submission',
+          submittedAt: '2026-07-22T09:15:00.000Z',
+          receivedAt: new Date('2026-07-22T09:16:00.000Z'),
+          status: 'unprocessed'
+        },
+        {
+          submissionId: 'sub-scored-001',
+          text: 'Scored submission',
+          submittedAt: '2026-07-22T09:20:00.000Z',
+          receivedAt: new Date('2026-07-22T09:21:00.000Z'),
+          status: 'scored',
+          result: {
+            id: 'sub-scored-001',
+            kind: 'opportunity'
+          },
+          scoredAt: new Date('2026-07-22T09:25:00.000Z')
+        }
+      ])
+
+      const response = await server.inject({
+        method: 'GET',
+        url: '/submissions?status=unprocessed'
+      })
+
+      expect(response.statusCode).toBe(200)
+      expect(response.result).toHaveLength(1)
+      expect(response.result[0].submissionId).toBe('sub-unprocessed-001')
+      expect(response.result[0].status).toBe('unprocessed')
+    })
+
+    test('returns 400 when status query is missing', async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/submissions'
+      })
+
+      expect(response.statusCode).toBe(400)
+    })
+
+    test('returns 400 when status query is invalid', async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/submissions?status=unknown'
+      })
+
+      expect(response.statusCode).toBe(400)
+    })
+  })
+
+  describe('GET /submissions/{submissionId}', () => {
+    test('returns 200 with the submission when it exists', async () => {
+      await server.db.collection('submissions').insertOne({
+        submissionId: 'sub-get-001',
+        text: 'Stored submission',
+        submittedAt: '2026-07-22T09:15:00.000Z',
+        receivedAt: new Date('2026-07-22T09:16:00.000Z'),
+        status: 'unprocessed'
+      })
+
+      const response = await server.inject({
+        method: 'GET',
+        url: '/submissions/sub-get-001'
+      })
+
+      expect(response.statusCode).toBe(200)
+      expect(response.result.submissionId).toBe('sub-get-001')
+      expect(response.result.status).toBe('unprocessed')
+    })
+
+    test('returns 404 when submission does not exist', async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/submissions/not-there'
+      })
+
+      expect(response.statusCode).toBe(404)
+    })
+  })
+
   describe('POST /submissions/{submissionId}/score', () => {
     const fakeEngine = { name: 'fake-engine' }
     const fakeResult = {
