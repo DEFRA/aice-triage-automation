@@ -16,12 +16,23 @@ export function createStubEngine() {
           text
         )
 
+      const evidence = (
+        text
+          .split('\n')
+          .map((line) => line.trim())
+          .find((line) => line.startsWith('Problem:'))
+          ?.replace('Problem: ', '') ??
+        text.trim().split('\n')[0] ??
+        ''
+      ).slice(0, 200)
+
       const criteria = Object.fromEntries(
         CRITERIA.map((criterion) => [
           criterion.key,
           {
             rag: 'amber',
             rubric_band_cited: criterion.amber,
+            evidence_quoted: evidence,
             explanation: `Stub: placeholder amber rating for ${criterion.name}.`,
             missing_evidence: criterion.key === 'business_value'
           }

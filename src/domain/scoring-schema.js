@@ -14,6 +14,7 @@ import { CRITERION_KEYS, RAG_VALUES, ROUTING_VALUES } from '#/domain/rubric.js'
  * @typedef {object} CriterionResult
  * @property {RagValue} rag
  * @property {string} rubric_band_cited
+ * @property {string} evidence_quoted
  * @property {string} explanation
  * @property {boolean} missing_evidence
  */
@@ -49,6 +50,9 @@ export const classificationZod = z.object({
 const criterionResultZod = z.object({
   rag: z.enum(RAG_VALUES),
   rubric_band_cited: z.string().min(1),
+  // Verbatim words from the submission the rating rests on; empty when the
+  // submission says nothing relevant to the criterion.
+  evidence_quoted: z.string(),
   explanation: z.string().min(1),
   missing_evidence: z.boolean()
 })
@@ -70,6 +74,7 @@ const criterionResultJoi = Joi.object({
     .valid(...RAG_VALUES)
     .required(),
   rubric_band_cited: Joi.string().min(1).required(),
+  evidence_quoted: Joi.string().allow('').required(),
   explanation: Joi.string().min(1).required(),
   missing_evidence: Joi.boolean().required()
 })

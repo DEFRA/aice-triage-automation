@@ -27,6 +27,7 @@ export const SCORING_SYSTEM_PROMPT = [
   'INSTRUCTIONS',
   '- Score every criterion. For each, choose a rag value (red, amber or green).',
   '- Set rubric_band_cited to the exact band text from the rubric you matched against.',
+  '- Set evidence_quoted to the words from the submission the rating rests on, quoted verbatim — do not paraphrase. Keep it to the one or two most relevant sentences. Leave it empty when the submission says nothing relevant to the criterion.',
   '- Write an explanation that refers directly to that band wording and the evidence in the submission.',
   '- Set missing_evidence true when a criterion is held back only by evidence the submission did not provide.',
   '- Set routing_recommendation to one of: recommended_pattern, hands_on_session, referral_other_team, refer_ai_unit.',

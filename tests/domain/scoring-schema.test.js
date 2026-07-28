@@ -10,6 +10,7 @@ const wellFormed = {
       {
         rag: 'green',
         rubric_band_cited: 'Structured, accessible, well understood',
+        evidence_quoted: 'All records are held in a single SharePoint list.',
         explanation: 'The submission clearly describes its data sources.',
         missing_evidence: false
       }
@@ -49,6 +50,20 @@ const malformedCases = [
   {
     label: 'routing_recommendation not one of the four values',
     input: { ...wellFormed, routing_recommendation: 'not_a_valid_value' }
+  },
+  {
+    label: 'evidence_quoted missing from a criterion',
+    input: {
+      ...wellFormed,
+      criteria: {
+        ...wellFormed.criteria,
+        [CRITERION_KEYS[0]]: Object.fromEntries(
+          Object.entries(wellFormed.criteria[CRITERION_KEYS[0]]).filter(
+            ([field]) => field !== 'evidence_quoted'
+          )
+        )
+      }
+    }
   },
   {
     label: "missing_evidence is string 'true' not boolean",

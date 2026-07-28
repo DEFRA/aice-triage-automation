@@ -87,6 +87,7 @@ describe('#agents/engine-bedrock', () => {
         business_value: {
           rag: 'amber',
           rubric_band_cited: 'Real problem, AI value not quantified',
+          evidence_quoted: 'We spend two days a week collating reports',
           explanation: 'Some detailed model text',
           missing_evidence: true
         }
@@ -105,6 +106,7 @@ describe('#agents/engine-bedrock', () => {
         business_value: {
           rag: 'amber',
           rubric_band_cited: 'Real problem, AI value not quantified',
+          evidence_quoted: '[REDACTED]',
           explanation: '[REDACTED]',
           missing_evidence: true
         }
