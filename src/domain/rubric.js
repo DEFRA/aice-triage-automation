@@ -38,6 +38,23 @@
  * @property {'recommended_pattern' | 'hands_on_session' | 'referral_other_team' | 'refer_ai_unit'} routing
  * @property {string} readingPattern
  */
+/**
+ * Which version of the rubric a score was taken under.
+ *
+ * Date-stamped rather than numbered, so that the value is self-describing when
+ * it turns up in a stored result months later: it says when these rules were
+ * true. The first version is the date the transcription above was verified
+ * against the source documents.
+ *
+ * THE RULE: change this in the same commit as any change to the band text, the
+ * reading patterns, or the routing rules derived from them. A score is only
+ * comparable with another score taken under the same version, so a rubric edit
+ * that leaves this untouched silently mixes two sets of rules together.
+ *
+ * @type {string}
+ */
+export const RUBRIC_VERSION = '2026-07-13'
+
 /** @type {ReadonlyArray<Criterion>} */
 export const CRITERIA = [
   {

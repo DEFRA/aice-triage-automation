@@ -1,7 +1,12 @@
 import { describe, test, expect } from 'vitest'
 
-import { CRITERION_KEYS } from '#/domain/rubric.js'
-import { scoringResultJoi, scoringResultZod } from '#/domain/scoring-schema.js'
+import { CRITERION_KEYS, RUBRIC_VERSION } from '#/domain/rubric.js'
+import {
+  scoringResultJoi,
+  scoringResultZod,
+  scoredResultJoi,
+  scoredResultZod
+} from '#/domain/scoring-schema.js'
 
 const wellFormed = {
   criteria: Object.fromEntries(
@@ -101,5 +106,31 @@ describe('#domain/scoring-schema', () => {
         expect(joiError, `Joi accepted: ${label}`).toBeDefined()
       })
     }
+  })
+
+  describe('story 33: the scored-result shapes require a rubric version', () => {
+    const scored = { ...wellFormed, rubric_version: RUBRIC_VERSION }
+
+    test('a stamped result passes both scored-result schemas', () => {
+      expect(scoredResultZod.safeParse(scored).success).toBe(true)
+      expect(scoredResultJoi.validate(scored).error).toBeUndefined()
+    })
+
+    test('a result without rubric_version is rejected by both', () => {
+      expect(scoredResultZod.safeParse(wellFormed).success).toBe(false)
+      expect(scoredResultJoi.validate(wellFormed).error).toBeDefined()
+    })
+
+    test('an empty rubric_version is rejected by both', () => {
+      const empty = { ...wellFormed, rubric_version: '' }
+
+      expect(scoredResultZod.safeParse(empty).success).toBe(false)
+      expect(scoredResultJoi.validate(empty).error).toBeDefined()
+    })
+
+    test('the model-facing shapes stay version-free, so the model is never asked for one', () => {
+      expect(scoringResultZod.safeParse(wellFormed).success).toBe(true)
+      expect(scoringResultJoi.validate(wellFormed).error).toBeUndefined()
+    })
   })
 })

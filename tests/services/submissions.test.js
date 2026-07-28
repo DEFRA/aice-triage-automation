@@ -1,8 +1,10 @@
 import { MongoClient } from 'mongodb'
+import { RUBRIC_VERSION } from '#/domain/rubric.js'
 import {
   insertSubmission,
   findSubmissions,
-  findSubmission
+  findSubmission,
+  markScored
 } from '#/services/submissions.js'
 import { createIndexes } from '#/plugins/mongodb.js'
 
@@ -134,6 +136,35 @@ describe('#services/submissions', () => {
     })
     expect(found).not.toHaveProperty('_id')
     expect(missing).toBeNull()
+  })
+
+  test('story 33 AC3: a scored submission records the rubric version it was scored against', async () => {
+    await insertSubmission(db, {
+      submissionId: 'sub-versioned',
+      text: 'raw text as sent',
+      submittedAt: '2026-07-22T09:15:00.000Z'
+    })
+
+    await markScored(db, 'sub-versioned', {
+      id: 'sub-versioned',
+      kind: 'opportunity',
+      reason: 'AI use case.',
+      scoring: {
+        criteria: {},
+        routing_recommendation: 'hands_on_session',
+        flags: {
+          access_request: false,
+          governance_required: false,
+          low_confidence: false
+        },
+        rubric_version: RUBRIC_VERSION
+      }
+    })
+
+    const stored = await findSubmission(db, 'sub-versioned')
+
+    expect(stored.status).toBe('scored')
+    expect(stored.result.scoring.rubric_version).toBe(RUBRIC_VERSION)
   })
 
   test('AC5: createIndexes creates unique submissionId and status indexes', async () => {

@@ -34,6 +34,12 @@ import { CRITERION_KEYS, RAG_VALUES, ROUTING_VALUES } from '#/domain/rubric.js'
  */
 
 /**
+ * A scoring result once the service has stamped the rubric version onto it.
+ *
+ * @typedef {ScoringResult & { rubric_version: string }} ScoredResult
+ */
+
+/**
  * @typedef {'opportunity' | 'access_request'} ClassificationKind
  */
 
@@ -79,6 +85,19 @@ const criterionResultJoi = Joi.object({
   missing_evidence: Joi.boolean().required()
 })
 
+/**
+ * The scoring result once the service has stamped it with the rubric version.
+ *
+ * Kept separate from the model-facing shapes above on purpose. `scoringResultZod`
+ * is handed to the model as its structured-output schema, and the model is being
+ * asked to apply the rubric, not to report on which one it applied — a
+ * model-supplied version is a value that can be wrong. The service sets it, and
+ * these are the shapes that describe a result fit to store.
+ */
+export const scoredResultZod = scoringResultZod.extend({
+  rubric_version: z.string().min(1)
+})
+
 export const scoringResultJoi = Joi.object({
   criteria: Joi.object(
     Object.fromEntries(
@@ -94,3 +113,8 @@ export const scoringResultJoi = Joi.object({
     low_confidence: Joi.boolean().required()
   }).required()
 }).preferences({ convert: false })
+
+/** The Joi counterpart of scoredResultZod: a result fit to store. */
+export const scoredResultJoi = scoringResultJoi.keys({
+  rubric_version: Joi.string().min(1).required()
+})

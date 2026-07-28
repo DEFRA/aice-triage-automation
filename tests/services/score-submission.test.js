@@ -1,5 +1,6 @@
 import { describe, test, expect, vi } from 'vitest'
 
+import { RUBRIC_VERSION } from '#/domain/rubric.js'
 import { scoreSubmission } from '#/services/score-submission.js'
 
 const someValidScoring = {
@@ -62,7 +63,10 @@ describe('#services/score-submission', () => {
     expect(result.id).toBe('sub-001')
     expect(result.kind).toBe('opportunity')
     expect(result.reason).toBe('AI use case.')
-    expect(result.scoring).toBe(someValidScoring)
+    expect(result.scoring).toEqual({
+      ...someValidScoring,
+      rubric_version: RUBRIC_VERSION
+    })
   })
 
   test('AC4: classify rejection propagates', async () => {
@@ -89,5 +93,51 @@ describe('#services/score-submission', () => {
     await expect(scoreSubmission(engine, submission)).rejects.toThrow(
       'score failed'
     )
+  })
+
+  test('story 33 AC2: the service stamps the rubric version onto the grid', async () => {
+    const engine = {
+      name: 'fake',
+      classify: vi
+        .fn()
+        .mockResolvedValue({ kind: 'opportunity', reason: 'AI use case.' }),
+      score: vi.fn().mockResolvedValue(someValidScoring)
+    }
+
+    const result = await scoreSubmission(engine, submission)
+
+    expect(result.scoring.rubric_version).toBe(RUBRIC_VERSION)
+  })
+
+  test('story 33 AC2: a version volunteered by the model cannot influence the stored value', async () => {
+    const engine = {
+      name: 'fake',
+      classify: vi
+        .fn()
+        .mockResolvedValue({ kind: 'opportunity', reason: 'AI use case.' }),
+      score: vi.fn().mockResolvedValue({
+        ...someValidScoring,
+        rubric_version: 'whatever-the-model-decided'
+      })
+    }
+
+    const result = await scoreSubmission(engine, submission)
+
+    expect(result.scoring.rubric_version).toBe(RUBRIC_VERSION)
+  })
+
+  test('story 33: an access request carries no rubric version — no rubric was applied', async () => {
+    const engine = {
+      name: 'fake',
+      classify: vi.fn().mockResolvedValue({
+        kind: 'access_request',
+        reason: 'Licence request.'
+      }),
+      score: vi.fn()
+    }
+
+    const result = await scoreSubmission(engine, submission)
+
+    expect(result.scoring).toBeNull()
   })
 })

@@ -1,5 +1,7 @@
+import { RUBRIC_VERSION } from '#/domain/rubric.js'
+
 /**
- * @typedef {import('#/domain/scoring-schema.js').ScoringResult} ScoringResult
+ * @typedef {import('#/domain/scoring-schema.js').ScoredResult} ScoredResult
  */
 
 /**
@@ -7,7 +9,7 @@
  * @property {string} id
  * @property {'opportunity' | 'access_request'} kind
  * @property {string} reason
- * @property {ScoringResult | null} scoring
+ * @property {ScoredResult | null} scoring
  */
 
 /**
@@ -33,6 +35,8 @@ export async function scoreSubmission(engine, submission) {
     id: submission.id,
     kind: 'opportunity',
     reason: classification.reason,
-    scoring
+    // Spread first, then set: the service is the authority on which rubric was
+    // applied, so anything the model volunteered here is overwritten.
+    scoring: { ...scoring, rubric_version: RUBRIC_VERSION }
   }
 }
