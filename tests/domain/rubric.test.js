@@ -3,8 +3,11 @@ import { createHash } from 'node:crypto'
 import {
   CRITERIA,
   CRITERION_KEYS,
+  MISSING_EVIDENCE_THRESHOLD,
+  PROVENANCE_RULE,
   RAG_VALUES,
   READING_PATTERNS,
+  ROUTING_RULES,
   ROUTING_VALUES,
   RUBRIC_VERSION
 } from '#/domain/rubric.js'
@@ -48,18 +51,33 @@ describe('#domain/rubric', () => {
   })
 
   describe('story 33: the rubric version tracks the rubric text', () => {
-    // Both values are pinned together on purpose. Editing any band text or
-    // reading pattern changes the digest and fails this test — and the fix is
-    // to bump RUBRIC_VERSION and update both lines in the same commit. The
-    // failure IS the reminder: it is the only thing standing between a rubric
-    // edit and a database full of scores nobody can tell apart.
-    const PINNED_VERSION = '2026-07-13'
+    // Both values are pinned together on purpose. Editing any band text, reading
+    // pattern or routing rule changes the digest and fails this test — and the
+    // fix is to bump RUBRIC_VERSION and update both lines in the same commit.
+    // The failure IS the reminder: it is the only thing standing between a
+    // rubric edit and a database full of scores nobody can tell apart.
+    //
+    // It did its job on 2026-07-29: the four routing decisions rewrote the risk
+    // and business_value bands, this test failed, and the version bump was the
+    // deliberate act of accepting that. The digest now also covers ROUTING_RULES
+    // and MISSING_EVIDENCE_THRESHOLD, which did not exist when it was written —
+    // a routing rule changing silently is the same failure as a band changing
+    // silently, and the comment on RUBRIC_VERSION always said so.
+    const PINNED_VERSION = '2026-07-29'
     const PINNED_DIGEST =
-      '9ed6b3d0f66d2f3fd6332d8c644a48206386545082a187b376148a87dda7ddd5'
+      'eb606497dbe69b3b95046bae93a895f370faf2a02e36bb69e48905bedaf1df26'
 
     test('the rubric text has not changed without the version changing with it', () => {
       const digest = createHash('sha256')
-        .update(JSON.stringify({ CRITERIA, READING_PATTERNS }))
+        .update(
+          JSON.stringify({
+            CRITERIA,
+            READING_PATTERNS,
+            ROUTING_RULES,
+            MISSING_EVIDENCE_THRESHOLD,
+            PROVENANCE_RULE
+          })
+        )
         .digest('hex')
 
       expect(

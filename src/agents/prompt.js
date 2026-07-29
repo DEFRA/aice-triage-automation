@@ -1,10 +1,25 @@
-import { CRITERIA } from '#/domain/rubric.js'
+import {
+  CRITERIA,
+  MISSING_EVIDENCE_THRESHOLD,
+  PROVENANCE_RULE,
+  READING_PATTERNS,
+  ROUTING_RULES
+} from '#/domain/rubric.js'
 
 const criteria = CRITERIA.map(
   (criterion, index) =>
     `${index + 1}. ${criterion.name} (key: "${criterion.key}") — ${criterion.whatToLookAt}.\n` +
     `   Red: ${criterion.red}\n   Amber: ${criterion.amber}\n   Green: ${criterion.green}`
 ).join('\n')
+
+const patterns = READING_PATTERNS.map((pattern) => `   - ${pattern}`).join('\n')
+
+// Precedence order, first match wins. The reading patterns are one step in this
+// list rather than the whole of it, so they render inline at their place.
+const routingRules = ROUTING_RULES.map((rule, index) => {
+  const head = `${index + 1}. When ${rule.when}, route ${rule.route}.`
+  return rule.key === 'reading_patterns' ? `${head}\n${patterns}` : head
+}).join('\n')
 
 export const SCORING_SYSTEM_PROMPT = [
   'You are an expert AI use-case assessor for Defra. Score the submitted use case against the rubric below.',
@@ -13,16 +28,19 @@ export const SCORING_SYSTEM_PROMPT = [
   criteria,
   '',
   'ROUTING RULES',
-  '- recommended_pattern: majority green, clear AI fit, stable process, submission demonstrates the case is already well-shaped for AI delivery.',
-  '- hands_on_session: mixed amber across criteria, the idea is sound but needs development support to become ready.',
-  '- referral_other_team: the problem is real but AI is not the right fit, or another Defra team is better placed to build it.',
-  '- refer_ai_unit: policy, approvals, governance, or procurement is implicated — regardless of other scores.',
+  'Before any rule below: use refer_ai_unit when the submission is about policy, approvals, governance or procurement rather than a thing to build — regardless of other scores.',
+  '',
+  'Otherwise apply these rules IN ORDER. The first rule that matches wins; stop there and do not weigh the later ones.',
+  routingRules,
+  '',
+  'Use referral_other_team where the problem is real but AI is not the right fit, or another Defra team is better placed to build it.',
   '',
   'CALIBRATION GUIDANCE',
-  '- The AI-specific benefit case is rarely quantified when a submission first arrives. It usually lands amber, not green. Do not award green without a quantified case.',
-  '- When a rating is held back only by missing evidence, set missing_evidence true for that criterion rather than scoring it red. Those gaps become the questions the panel asks on the triage call.',
-  '- Most internal Defra cases land amber on risk.',
-  '- Use refer_ai_unit when policy, approvals or governance is implicated.',
+  '- Match the band text as written. Where a band names a harm or a kind of evidence, it means it — do not soften it with a general expectation about what Defra submissions are usually like.',
+  '- "Quantified" means data collected and evidenced in ANY unit. Money, officer hours, cases, or counts of people, businesses or land affected all count equally. Do not hold a benefit case at amber because its figures are not expressed in pounds.',
+  `- ${PROVENANCE_RULE}`,
+  '- The risk band means what it says about mitigation: the harms named in red score red even where a human reviews every output. Do not move a rating from red to amber because a mitigation is described.',
+  `- missing_evidence is required on every criterion and is counted, not just read. Set it true whenever the rating is held back only by evidence the submission did not provide — that is a question for the panel to ask on the triage call, not an automatic red. Under-setting it changes the routing of the whole submission: ${MISSING_EVIDENCE_THRESHOLD} or more flags routes to a hands-on session.`,
   '',
   'INSTRUCTIONS',
   '- Score every criterion. For each, choose a rag value (red, amber or green).',
