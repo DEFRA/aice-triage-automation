@@ -50,6 +50,73 @@ describe('#domain/rubric', () => {
     ])
   })
 
+  describe('rubric version 2026-07-29: the routing rules', () => {
+    test('there are four rules, in precedence order, with unique keys', () => {
+      expect(ROUTING_RULES.map((rule) => rule.key)).toEqual([
+        'evident_conversation',
+        'incomplete_evidence',
+        'reading_patterns',
+        'strong_case'
+      ])
+    })
+
+    test('every rule states a condition, a route and its evidence', () => {
+      for (const rule of ROUTING_RULES) {
+        expect(rule.when.trim().length).toBeGreaterThan(0)
+        expect(rule.route.trim().length).toBeGreaterThan(0)
+        expect(rule.because.trim().length).toBeGreaterThan(0)
+      }
+    })
+
+    test('every rule routes to a real routing value, or defers to the patterns', () => {
+      for (const rule of ROUTING_RULES) {
+        if (rule.key === 'reading_patterns') {
+          // The one rule that does not name a single reply: which reply it
+          // produces depends on which pattern matched.
+          expect(rule.route).toBe('per the pattern')
+          continue
+        }
+        expect(ROUTING_VALUES).toContain(rule.route)
+      }
+    })
+
+    test('no rule hedges — each must be turnable into an `if`', () => {
+      // The decision session's own read-back test. A rule containing "consider",
+      // "may" or "usually" cannot become a line of code, and a rule that cannot
+      // become a line of code is how routing stayed unwritten for months.
+      for (const rule of ROUTING_RULES) {
+        expect(`${rule.when} ${rule.route}`.toLowerCase()).not.toMatch(
+          /\b(consider|may|usually|generally|typically)\b/
+        )
+      }
+    })
+
+    test('the strong case is the residual, and fires last', () => {
+      const last = ROUTING_RULES.at(-1)
+      expect(last.key).toBe('strong_case')
+      expect(last.route).toBe('recommended_pattern')
+      // It is a provisional default the triage panel has not ratified. If this
+      // ever stops saying so, someone has quietly promoted it to a decision.
+      expect(last.because).toContain('PROVISIONAL DEFAULT')
+    })
+
+    test('the missing-evidence threshold is a count of criteria that can actually fire', () => {
+      expect(Number.isInteger(MISSING_EVIDENCE_THRESHOLD)).toBe(true)
+      expect(MISSING_EVIDENCE_THRESHOLD).toBeGreaterThan(0)
+      expect(MISSING_EVIDENCE_THRESHOLD).toBeLessThanOrEqual(CRITERIA.length)
+    })
+
+    test('the incomplete-evidence rule quotes the threshold rather than restating it', () => {
+      // Two copies of the number is one copy too many: the rule text is what
+      // reaches the model, and a stale number there routes real submissions
+      // wrongly while every other test still passes.
+      const rule = ROUTING_RULES.find(
+        (candidate) => candidate.key === 'incomplete_evidence'
+      )
+      expect(rule.when).toContain(String(MISSING_EVIDENCE_THRESHOLD))
+    })
+  })
+
   describe('story 33: the rubric version tracks the rubric text', () => {
     // Both values are pinned together on purpose. Editing any band text, reading
     // pattern or routing rule changes the digest and fails this test — and the
