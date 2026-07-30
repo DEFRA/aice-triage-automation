@@ -55,6 +55,9 @@ import { CRITERION_KEYS, RAG_VALUES, ROUTING_VALUES } from '#/domain/rubric.js'
  * @typedef {'opportunity' | 'access_request' | 'enquiry'} ClassificationKind
  */
 
+/** The one kind that is scored. Every other kind returns early with no grid. */
+export const SCORED_KIND = 'opportunity'
+
 /** The kinds that are not scored. Anything here returns early with no grid. */
 export const UNSCORED_KINDS = Object.freeze(['access_request', 'enquiry'])
 
@@ -65,7 +68,9 @@ export const UNSCORED_KINDS = Object.freeze(['access_request', 'enquiry'])
  */
 
 export const classificationZod = z.object({
-  kind: z.enum(['opportunity', 'access_request', 'enquiry']),
+  // Derived, not restated. The enum and the scored/unscored split are the same
+  // fact, and writing them out twice is how they drift apart.
+  kind: z.enum([SCORED_KIND, ...UNSCORED_KINDS]),
   reason: z.string().min(1)
 })
 const criterionResultZod = z.object({

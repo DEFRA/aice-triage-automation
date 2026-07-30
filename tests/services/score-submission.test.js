@@ -182,6 +182,27 @@ describe('#services/score-submission', () => {
       expect(engine.score).not.toHaveBeenCalled()
     })
 
+    test('a kind the service has never been taught is not scored, and not relabelled', async () => {
+      // The branch is an allowlist, so this is the behaviour for any future kind
+      // whose author updates the enum and forgets this file. Under the previous
+      // denylist it fell through to the scorer and came back stamped
+      // 'opportunity' — a grid for something with nothing to rate.
+      const engine = {
+        name: 'fake',
+        classify: vi.fn().mockResolvedValue({
+          kind: 'some_kind_added_later',
+          reason: 'A kind this service predates.'
+        }),
+        score: vi.fn().mockResolvedValue(someValidScoring)
+      }
+
+      const result = await scoreSubmission(engine, submission)
+
+      expect(result.kind).toBe('some_kind_added_later')
+      expect(result.scoring).toBeNull()
+      expect(engine.score).not.toHaveBeenCalled()
+    })
+
     test('an access request still reports itself as one', async () => {
       const engine = {
         name: 'fake',

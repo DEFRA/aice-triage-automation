@@ -1,5 +1,5 @@
 import { RUBRIC_VERSION } from '#/domain/rubric.js'
-import { UNSCORED_KINDS } from '#/domain/scoring-schema.js'
+import { SCORED_KIND } from '#/domain/scoring-schema.js'
 
 /**
  * @typedef {import('#/domain/scoring-schema.js').ScoredResult} ScoredResult
@@ -21,7 +21,11 @@ import { UNSCORED_KINDS } from '#/domain/scoring-schema.js'
 export async function scoreSubmission(engine, submission) {
   const classification = await engine.classify(submission.text)
 
-  if (UNSCORED_KINDS.includes(classification.kind)) {
+  // An allowlist, and deliberately not a list of kinds to skip. A denylist fails
+  // open: a kind added to the enum but forgotten here would fall through to the
+  // scorer and be stamped 'opportunity' on the way out. This way a kind nobody
+  // has taught the service about is returned unscored, carrying its own name.
+  if (classification.kind !== SCORED_KIND) {
     return {
       id: submission.id,
       // The classifier's own answer, not a literal. This line used to hardcode
@@ -37,7 +41,7 @@ export async function scoreSubmission(engine, submission) {
 
   return {
     id: submission.id,
-    kind: 'opportunity',
+    kind: SCORED_KIND,
     reason: classification.reason,
     // Spread first, then set: the service is the authority on which rubric was
     // applied, so anything the model volunteered here is overwritten.
