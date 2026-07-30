@@ -115,4 +115,59 @@ describe('#agents/engine-stub', () => {
     expect(fetchSpy).not.toHaveBeenCalled()
     fetchSpy.mockRestore()
   })
+
+  describe('story 34: an enquiry is a third kind, and is not scored', () => {
+    test('AC1: a question about which tools are permitted is an enquiry', async () => {
+      const engine = createStubEngine()
+
+      const result = await engine.classify(await readFixture('enquiry.txt'))
+
+      expect(result.kind).toBe('enquiry')
+      expect(classificationZod.safeParse(result).success).toBe(true)
+    })
+
+    test('AC1: a question about how guidance should be read is an enquiry', async () => {
+      const engine = createStubEngine()
+
+      const result = await engine.classify(
+        await readFixture('enquiry-guidance.txt')
+      )
+
+      expect(result.kind).toBe('enquiry')
+    })
+
+    test('AC2: a use case that also asks a question stays an opportunity', async () => {
+      // The guard against the new kind becoming a dustbin. The use case is the
+      // substance and the question is the wrapper, and this shape is half of one
+      // real batch. An opportunity swallowed as an enquiry is never scored, so
+      // nobody ever sees a grid that looks wrong.
+      const engine = createStubEngine()
+
+      const result = await engine.classify(
+        await readFixture('opportunity-with-question.txt')
+      )
+
+      expect(result.kind).toBe('opportunity')
+    })
+
+    test('AC3: a licence request for named people is still an access request', async () => {
+      const engine = createStubEngine()
+
+      const result = await engine.classify(
+        await readFixture('access-request.txt')
+      )
+
+      expect(result.kind).toBe('access_request')
+    })
+
+    test('AC6: an enquiry classifies with no network call', async () => {
+      const engine = createStubEngine()
+      const fetchSpy = vi.spyOn(globalThis, 'fetch')
+
+      await engine.classify(await readFixture('enquiry.txt'))
+
+      expect(fetchSpy).not.toHaveBeenCalled()
+      fetchSpy.mockRestore()
+    })
+  })
 })

@@ -60,11 +60,38 @@ export function createStubEngine() {
         /\bcopilot\b/i.test(text) && /(licen[sc]e|access)/i.test(text)
       const isAccessRequest = wantsTooling && emailCount >= 2
 
+      // A use case describes something to build or improve. The stub looks for
+      // that first, because an opportunity wrongly called an enquiry is never
+      // scored and nobody sees the mistake — the same asymmetry the real
+      // classifier is told about.
+      const describesWork =
+        /\b(we (want|would like|need)|our team|the problem is|users? (are|would)|process)\b/i.test(
+          text
+        )
+      const asksQuestion =
+        /\?/.test(text) &&
+        /(allowed|permitted|sign-?post|does this mean|guidance|position on|compare notes|have a call)/i.test(
+          text
+        )
+      const isEnquiry = asksQuestion && !describesWork
+
+      if (isAccessRequest) {
+        return {
+          kind: 'access_request',
+          reason:
+            'Asks for tool licences or access for a named team (stub heuristic).'
+        }
+      }
+      if (isEnquiry) {
+        return {
+          kind: 'enquiry',
+          reason:
+            'Asks a question rather than describing a problem to solve (stub heuristic).'
+        }
+      }
       return {
-        kind: isAccessRequest ? 'access_request' : 'opportunity',
-        reason: isAccessRequest
-          ? 'Asks for tool licences or access for a named team (stub heuristic).'
-          : 'Describes an AI use case to triage (stub heuristic).'
+        kind: 'opportunity',
+        reason: 'Describes an AI use case to triage (stub heuristic).'
       }
     }
   }

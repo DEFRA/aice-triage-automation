@@ -45,8 +45,18 @@ import { CRITERION_KEYS, RAG_VALUES, ROUTING_VALUES } from '#/domain/rubric.js'
  */
 
 /**
- * @typedef {'opportunity' | 'access_request'} ClassificationKind
+ * What the classifier decided a submission is.
+ *
+ * Only an `opportunity` is scored. The other two are answered by a person and
+ * carry the classifier's reason in place of a grid — an `access_request` wants
+ * licences, an `enquiry` asks a question with no use case in it. Scoring either
+ * would produce eight ratings for something that has nothing to rate.
+ *
+ * @typedef {'opportunity' | 'access_request' | 'enquiry'} ClassificationKind
  */
+
+/** The kinds that are not scored. Anything here returns early with no grid. */
+export const UNSCORED_KINDS = Object.freeze(['access_request', 'enquiry'])
 
 /**
  * @typedef {object} Classification
@@ -55,7 +65,7 @@ import { CRITERION_KEYS, RAG_VALUES, ROUTING_VALUES } from '#/domain/rubric.js'
  */
 
 export const classificationZod = z.object({
-  kind: z.enum(['opportunity', 'access_request']),
+  kind: z.enum(['opportunity', 'access_request', 'enquiry']),
   reason: z.string().min(1)
 })
 const criterionResultZod = z.object({

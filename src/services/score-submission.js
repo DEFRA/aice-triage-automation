@@ -1,4 +1,5 @@
 import { RUBRIC_VERSION } from '#/domain/rubric.js'
+import { UNSCORED_KINDS } from '#/domain/scoring-schema.js'
 
 /**
  * @typedef {import('#/domain/scoring-schema.js').ScoredResult} ScoredResult
@@ -7,7 +8,7 @@ import { RUBRIC_VERSION } from '#/domain/rubric.js'
 /**
  * @typedef {object} PipelineResult
  * @property {string} id
- * @property {'opportunity' | 'access_request'} kind
+ * @property {import('#/domain/scoring-schema.js').ClassificationKind} kind
  * @property {string} reason
  * @property {ScoredResult | null} scoring
  */
@@ -20,10 +21,13 @@ import { RUBRIC_VERSION } from '#/domain/rubric.js'
 export async function scoreSubmission(engine, submission) {
   const classification = await engine.classify(submission.text)
 
-  if (classification.kind === 'access_request') {
+  if (UNSCORED_KINDS.includes(classification.kind)) {
     return {
       id: submission.id,
-      kind: 'access_request',
+      // The classifier's own answer, not a literal. This line used to hardcode
+      // 'access_request', which was true while that was the only unscored kind
+      // and would have silently relabelled every enquiry as a licence request.
+      kind: classification.kind,
       reason: classification.reason,
       scoring: null
     }
