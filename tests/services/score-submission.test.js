@@ -6,8 +6,8 @@ import { scoreSubmission } from '#/services/score-submission.js'
 const someValidScoring = {
   criteria: {},
   routing_recommendation: 'hands_on_session',
+  pattern_cited: '',
   flags: {
-    access_request: false,
     governance_required: false,
     low_confidence: false
   }
@@ -65,7 +65,10 @@ describe('#services/score-submission', () => {
     expect(result.reason).toBe('AI use case.')
     expect(result.scoring).toEqual({
       ...someValidScoring,
-      rubric_version: RUBRIC_VERSION
+      rubric_version: RUBRIC_VERSION,
+      // Both of these are the service's to set, not the model's — see stories
+      // 33 and 36. The engine above returned neither.
+      flags: { ...someValidScoring.flags, access_request: false }
     })
   })
 
@@ -139,5 +142,44 @@ describe('#services/score-submission', () => {
     const result = await scoreSubmission(engine, submission)
 
     expect(result.scoring).toBeNull()
+  })
+
+  describe('story 36: the classifier decides access_request, not the scorer', () => {
+    // A live run on 30 July 2026 produced two results where the classifier said
+    // 'opportunity' and the grid that followed set access_request true. The
+    // service now settles it, because execution only reaches the scorer when
+    // classification already answered no.
+
+    test('a scored result always carries access_request false', async () => {
+      const engine = {
+        name: 'fake',
+        classify: vi
+          .fn()
+          .mockResolvedValue({ kind: 'opportunity', reason: 'A use case.' }),
+        score: vi.fn().mockResolvedValue(someValidScoring)
+      }
+
+      const result = await scoreSubmission(engine, submission)
+
+      expect(result.scoring.flags.access_request).toBe(false)
+    })
+
+    test('a model that returns access_request true cannot override the classifier', async () => {
+      const engine = {
+        name: 'fake',
+        classify: vi
+          .fn()
+          .mockResolvedValue({ kind: 'opportunity', reason: 'A use case.' }),
+        score: vi.fn().mockResolvedValue({
+          ...someValidScoring,
+          flags: { ...someValidScoring.flags, access_request: true }
+        })
+      }
+
+      const result = await scoreSubmission(engine, submission)
+
+      expect(result.kind).toBe('opportunity')
+      expect(result.scoring.flags.access_request).toBe(false)
+    })
   })
 })

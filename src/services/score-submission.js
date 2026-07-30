@@ -37,6 +37,13 @@ export async function scoreSubmission(engine, submission) {
     reason: classification.reason,
     // Spread first, then set: the service is the authority on which rubric was
     // applied, so anything the model volunteered here is overwritten.
-    scoring: { ...scoring, rubric_version: RUBRIC_VERSION }
+    scoring: {
+      ...scoring,
+      rubric_version: RUBRIC_VERSION,
+      // Always false, and set here rather than asked of the model. Execution only
+      // reaches this line because classification returned 'opportunity', so the
+      // scorer answering the same question again could only contradict it.
+      flags: { ...scoring.flags, access_request: false }
+    }
   }
 }

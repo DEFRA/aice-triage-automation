@@ -76,4 +76,30 @@ describe('#agents/prompt', () => {
       expect(SCORING_SYSTEM_PROMPT).toMatch(/score red even/i)
     })
   })
+
+  describe('story 36: the scorer is not asked to classify', () => {
+    test('it does not ask the model to set flags.access_request', () => {
+      // Classification runs first and returns early for an access request, so the
+      // scorer only ever sees an opportunity. Asking again produced two
+      // self-contradicting results in the live run of 30 July 2026.
+      expect(SCORING_SYSTEM_PROMPT).not.toMatch(/flags\.access_request/i)
+    })
+  })
+
+  describe('story 37: a recommended pattern must name a pattern', () => {
+    test('it tells the model to name the pattern, and where the catalogue is', () => {
+      expect(SCORING_SYSTEM_PROMPT).toMatch(/pattern_cited/)
+      expect(SCORING_SYSTEM_PROMPT).toMatch(
+        /digital\.defra\.gov\.uk\/ai-toolkit\/patterns/
+      )
+    })
+
+    test('it gives the way out, so no pattern name is ever invented', () => {
+      // A required field with no escape hatch produces fabricated pattern names,
+      // which is a worse failure than the one being fixed: a made-up name reads
+      // exactly like a real recommendation.
+      expect(SCORING_SYSTEM_PROMPT).toMatch(/no catalogue pattern fits/i)
+      expect(SCORING_SYSTEM_PROMPT).toMatch(/do not invent a name/i)
+    })
+  })
 })

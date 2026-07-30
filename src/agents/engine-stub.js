@@ -44,8 +44,10 @@ export function createStubEngine() {
         routing_recommendation: governance
           ? 'refer_ai_unit'
           : 'hands_on_session',
+        // Neither routing the stub returns is recommended_pattern, so this stays
+        // empty. It must, or the result fails its own schema.
+        pattern_cited: '',
         flags: {
-          access_request: false,
           governance_required: governance,
           low_confidence: false
         }

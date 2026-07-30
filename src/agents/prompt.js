@@ -49,7 +49,9 @@ export const SCORING_SYSTEM_PROMPT = [
   '- Write an explanation that refers directly to that band wording and the evidence in the submission.',
   '- Set missing_evidence true when a criterion is held back only by evidence the submission did not provide.',
   '- Set routing_recommendation to one of: recommended_pattern, hands_on_session, referral_other_team, refer_ai_unit.',
-  '- Set flags.access_request true if the submission is a request for tool licences, not an AI opportunity.',
+  '- When you choose recommended_pattern, set pattern_cited to the name of the pattern you are recommending, from the AI digital toolkit catalogue at https://digital.defra.gov.uk/ai-toolkit/patterns. Recommending a pattern without naming one is not a usable reply.',
+  '- If no catalogue pattern fits, do NOT recommend one and do NOT invent a name: choose hands_on_session instead and say in the explanation why no pattern applies.',
+  '- Leave pattern_cited empty for every routing other than recommended_pattern.',
   '- Set flags.governance_required true if policy, approvals or governance is implicated.',
   '- Set flags.low_confidence true if you are too uncertain to act without a human reading it.'
 ].join('\n')
