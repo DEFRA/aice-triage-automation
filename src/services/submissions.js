@@ -1,8 +1,6 @@
 const SUBMISSIONS_COLLECTION = 'submissions'
 export const SUBMISSION_STATUSES = ['unprocessed', 'scored']
 
-export const SUBMISSION_STATUSES = ['unprocessed']
-
 export async function insertSubmission(
   db,
   { submissionId, text, submittedAt }

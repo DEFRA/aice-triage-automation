@@ -1,7 +1,6 @@
 import Boom from '@hapi/boom'
 import Joi from 'joi'
 
-
 import { chooseEngine } from '#/agents/choose-engine.js'
 import { stripBoilerplate } from '#/domain/submission.js'
 import { scoreSubmission } from '#/services/score-submission.js'
