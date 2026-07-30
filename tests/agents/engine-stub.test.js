@@ -150,6 +150,22 @@ describe('#agents/engine-stub', () => {
       expect(result.kind).toBe('opportunity')
     })
 
+    test('AC2: a use case written without stock phrases stays an opportunity', async () => {
+      // Regression. This is the shape of a submission that arrives as answers to
+      // the intake form's four questions — so the headings supply a question
+      // mark, and "some guidance has been shared" supplies a keyword, while none
+      // of the stock phrases a tuned heuristic looks for appear anywhere. The
+      // first version of the enquiry rule called this an enquiry, which meant a
+      // fully-formed use case was silently never scored.
+      const engine = createStubEngine()
+
+      const result = await engine.classify(
+        await readFixture('opportunity-form-answers.txt')
+      )
+
+      expect(result.kind).toBe('opportunity')
+    })
+
     test('AC3: a licence request for named people is still an access request', async () => {
       const engine = createStubEngine()
 

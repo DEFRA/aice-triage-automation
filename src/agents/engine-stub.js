@@ -60,19 +60,26 @@ export function createStubEngine() {
         /\bcopilot\b/i.test(text) && /(licen[sc]e|access)/i.test(text)
       const isAccessRequest = wantsTooling && emailCount >= 2
 
-      // A use case describes something to build or improve. The stub looks for
-      // that first, because an opportunity wrongly called an enquiry is never
-      // scored and nobody sees the mistake — the same asymmetry the real
-      // classifier is told about.
+      // A use case names something wrong in the world: a delay, a manual step, a
+      // backlog. An enquiry asks about the rules instead. That is the line the
+      // stub draws, rather than looking for stock phrases — real submitters do
+      // not write "the problem is", they write "the problem still occurs", and a
+      // heuristic tuned to set wording misses the submissions it exists to catch.
       const describesWork =
-        /\b(we (want|would like|need)|our team|the problem is|users? (are|would)|process)\b/i.test(
+        /\b(problems?|issues?|delays?|frustration|bottleneck|backlog|workload|manual|process(es|ing|ed)?|we (want|would like|need)|our team|users? (are|would))\b/i.test(
           text
         )
+      // Narrower than "contains a question mark". Intake submissions arrive with
+      // the form's own headings ("What is the problem?"), so the mark alone says
+      // nothing about whether the submitter is asking anything.
       const asksQuestion =
         /\?/.test(text) &&
         /(allowed|permitted|sign-?post|does this mean|guidance|position on|compare notes|have a call)/i.test(
           text
         )
+      // describesWork wins over asksQuestion, because an opportunity wrongly
+      // called an enquiry is never scored and nobody sees a grid that looks
+      // wrong — the same asymmetry the real classifier is told about.
       const isEnquiry = asksQuestion && !describesWork
 
       if (isAccessRequest) {
