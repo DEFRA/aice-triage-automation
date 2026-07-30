@@ -29,7 +29,13 @@ async function writeLog(lines) {
 describe.skipIf(!enabled)('Bedrock classify integration', () => {
   const cases = [
     { fixture: 'access-request.txt', expectedKind: 'access_request' },
-    { fixture: 'opportunity.txt', expectedKind: 'opportunity' }
+    { fixture: 'opportunity.txt', expectedKind: 'opportunity' },
+    { fixture: 'enquiry.txt', expectedKind: 'enquiry' },
+    { fixture: 'enquiry-guidance.txt', expectedKind: 'enquiry' },
+    // The case the third kind can most easily get wrong, and the one that leaves
+    // no trace when it does: a real use case wrapped in a permission question.
+    // Swallowed as an enquiry it is never scored and nobody sees a wrong grid.
+    { fixture: 'opportunity-with-question.txt', expectedKind: 'opportunity' }
   ]
 
   for (const { fixture, expectedKind } of cases) {
