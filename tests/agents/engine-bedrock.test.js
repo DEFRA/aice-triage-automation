@@ -87,6 +87,7 @@ describe('#agents/engine-bedrock', () => {
         business_value: {
           rag: 'amber',
           rubric_band_cited: 'Real problem, AI value not quantified',
+          evidence_quoted: 'We spend two days a week collating reports',
           explanation: 'Some detailed model text',
           missing_evidence: true
         }
@@ -105,6 +106,7 @@ describe('#agents/engine-bedrock', () => {
         business_value: {
           rag: 'amber',
           rubric_band_cited: 'Real problem, AI value not quantified',
+          evidence_quoted: '[REDACTED]',
           explanation: '[REDACTED]',
           missing_evidence: true
         }
@@ -116,6 +118,34 @@ describe('#agents/engine-bedrock', () => {
         low_confidence: false
       }
     })
+  })
+
+  test('Redaction strips the submission content but keeps the rubric version', () => {
+    // The two halves of an auditable score pull in opposite directions here.
+    // evidence_quoted is submission content and must never reach the logs;
+    // rubric_version is a fact about which rules were applied, and a redacted
+    // log line is far less useful without it.
+    const redacted = redactScoringResult({
+      criteria: {
+        business_value: {
+          rag: 'amber',
+          rubric_band_cited: 'Real problem, AI value not quantified',
+          evidence_quoted: 'We spend two days a week collating reports',
+          explanation: 'Some detailed model text',
+          missing_evidence: true
+        }
+      },
+      routing_recommendation: 'hands_on_session',
+      flags: {
+        access_request: false,
+        governance_required: false,
+        low_confidence: false
+      },
+      rubric_version: '2026-07-13'
+    })
+
+    expect(redacted.criteria.business_value.evidence_quoted).toBe('[REDACTED]')
+    expect(redacted.rubric_version).toBe('2026-07-13')
   })
 
   test('Missing structuredOutput from classify throws ClassificationStructuredOutputError', async () => {

@@ -38,6 +38,7 @@ export function redactScoringResult(result) {
         key,
         {
           ...value,
+          evidence_quoted: '[REDACTED]',
           explanation: '[REDACTED]'
         }
       ])
