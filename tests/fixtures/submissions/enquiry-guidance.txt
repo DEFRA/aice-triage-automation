@@ -1,0 +1,5 @@
+We have a query from our delivery team about the published tooling guidance.
+
+There is a statement in it: "If you are not part of the pilot, do not use any AI
+tools" — does this mean that our ad hoc use of language models to aid development
+should be discontinued for now?

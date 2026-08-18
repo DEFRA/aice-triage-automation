@@ -1,0 +1,4 @@
+Hi team, could we get GitHub Copilot licences for two of our developers:
+dan@example.gov.uk and erin@example.gov.uk
+
+Also, is that allowed under the current architecture guardrails?

@@ -1,0 +1,2 @@
+Can I ask for some sign-posting to the current AI software tech that are allowed
+per our architecture guardrails? This is mainly for code generation purposes.

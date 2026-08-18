@@ -115,4 +115,105 @@ describe('#agents/engine-stub', () => {
     expect(fetchSpy).not.toHaveBeenCalled()
     fetchSpy.mockRestore()
   })
+
+  describe('story 34: an enquiry is a third kind, and is not scored', () => {
+    test('AC1: a question about which tools are permitted is an enquiry', async () => {
+      const engine = createStubEngine()
+
+      const result = await engine.classify(await readFixture('enquiry.txt'))
+
+      expect(result.kind).toBe('enquiry')
+      expect(classificationZod.safeParse(result).success).toBe(true)
+    })
+
+    test('AC1: a question about how guidance should be read is an enquiry', async () => {
+      const engine = createStubEngine()
+
+      const result = await engine.classify(
+        await readFixture('enquiry-guidance.txt')
+      )
+
+      expect(result.kind).toBe('enquiry')
+    })
+
+    test('AC2: a use case that also asks a question stays an opportunity', async () => {
+      // The guard against the new kind becoming a dustbin. The use case is the
+      // substance and the question is the wrapper, and this shape is half of one
+      // real batch. An opportunity swallowed as an enquiry is never scored, so
+      // nobody ever sees a grid that looks wrong.
+      const engine = createStubEngine()
+
+      const result = await engine.classify(
+        await readFixture('opportunity-with-question.txt')
+      )
+
+      expect(result.kind).toBe('opportunity')
+    })
+
+    test('AC2: a use case written without stock phrases stays an opportunity', async () => {
+      // Regression. This is the shape of a submission that arrives as answers to
+      // the intake form's four questions — so the headings supply a question
+      // mark, and "some guidance has been shared" supplies a keyword, while none
+      // of the stock phrases a tuned heuristic looks for appear anywhere. The
+      // first version of the enquiry rule called this an enquiry, which meant a
+      // fully-formed use case was silently never scored.
+      const engine = createStubEngine()
+
+      const result = await engine.classify(
+        await readFixture('opportunity-form-answers.txt')
+      )
+
+      expect(result.kind).toBe('opportunity')
+    })
+
+    test('AC3: a licence request for named people is still an access request', async () => {
+      const engine = createStubEngine()
+
+      const result = await engine.classify(
+        await readFixture('access-request.txt')
+      )
+
+      expect(result.kind).toBe('access_request')
+    })
+
+    test('AC3: a licence request that also asks a question is still an access request', async () => {
+      // Both signals fire at once here, and the two kinds are mutually
+      // exclusive, so something has to win. Access requests win: the ask is a
+      // licence for two named people, and answering the rules question instead
+      // leaves them still without the tool. Nothing about that precedence is
+      // self-evident from reading the branches in order, so it is pinned here.
+      const engine = createStubEngine()
+
+      const result = await engine.classify(
+        await readFixture('access-request-with-question.txt')
+      )
+
+      expect(result.kind).toBe('access_request')
+      expect(classificationZod.safeParse(result).success).toBe(true)
+    })
+
+    test('AC3: the question in that request is a live enquiry signal on its own', async () => {
+      // Guards the test above from passing vacuously. Were the fixture's
+      // wording to drift out of the enquiry rule, the precedence assertion
+      // would still be green while testing nothing, so prove the question half
+      // classifies as an enquiry once the named people are taken away.
+      const engine = createStubEngine()
+
+      const result = await engine.classify(
+        'Also, is that allowed under the current architecture guardrails?'
+      )
+
+      expect(result.kind).toBe('enquiry')
+    })
+
+    test('AC6: an enquiry classifies with no network call', async () => {
+      const engine = createStubEngine()
+      const fetchSpy = vi.spyOn(globalThis, 'fetch')
+
+      await engine.classify(await readFixture('enquiry.txt'))
+
+      expect(fetchSpy).not.toHaveBeenCalled()
+      fetchSpy.mockRestore()
+    })
+  })
 })

@@ -1,0 +1,16 @@
+What is the problem?
+
+We want to use an agent alongside a browser automation tool to generate and run
+test scripts for our system integration testing on the upcoming platform upgrade.
+The process is manual today and our team spends most of a sprint on it.
+
+This aims to improve productivity, widen test coverage and speed up delivery.
+
+Who are the users, and how many are affected?
+
+The eight testers on our delivery team, and the two teams waiting on our release.
+
+How have you tried to solve the problem so far?
+
+We have scripted the most repetitive cases by hand. What am I allowed to use for
+the rest — are agentic tools permitted under the current guidance?

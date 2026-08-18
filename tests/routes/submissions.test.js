@@ -312,6 +312,51 @@ describe('#submissions route', () => {
       expect(response.statusCode).toBe(404)
     })
 
+    test('story 34: an enquiry round-trips with no grid, and reads back as an enquiry', async () => {
+      // The pipeline returns scoring: null for a submission with no use case in
+      // it. Nothing in the route or the database enumerates the kinds, so this
+      // should hold — but "no code enumerates it" is an argument, not a test,
+      // and a null grid reaching a reviewer's screen is the thing that breaks.
+      await server.db.collection('submissions').insertOne({
+        submissionId: 'sub-enquiry',
+        text: 'Which AI tools are allowed under our architecture guardrails?',
+        submittedAt: '2026-07-28T09:15:00.000Z',
+        receivedAt: new Date('2026-07-28T09:16:00.000Z'),
+        status: 'unprocessed'
+      })
+
+      chooseEngine.mockReturnValue(fakeEngine)
+      scoreSubmission.mockResolvedValue({
+        id: 'sub-enquiry',
+        kind: 'enquiry',
+        reason: 'Asks which tools are permitted; the AI Unit would answer it.',
+        scoring: null
+      })
+
+      const scored = await server.inject({
+        method: 'POST',
+        url: '/submissions/sub-enquiry/score'
+      })
+
+      expect(scored.statusCode).toBe(200)
+      expect(scored.result.kind).toBe('enquiry')
+      expect(scored.result.scoring).toBeNull()
+
+      const readBack = await server.inject({
+        method: 'GET',
+        url: '/submissions/sub-enquiry'
+      })
+
+      expect(readBack.statusCode).toBe(200)
+      expect(readBack.result.status).toBe('scored')
+      expect(readBack.result.result.kind).toBe('enquiry')
+      expect(readBack.result.result.scoring).toBeNull()
+      // The reason stands in for the grid a reviewer would otherwise read.
+      expect(readBack.result.result.reason).toBe(
+        'Asks which tools are permitted; the AI Unit would answer it.'
+      )
+    })
+
     test('AC3: already scored returns stored result and does not invoke engine', async () => {
       const storedResult = {
         id: 'sub-scored',

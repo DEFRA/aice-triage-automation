@@ -144,6 +144,82 @@ describe('#services/score-submission', () => {
     expect(result.scoring).toBeNull()
   })
 
+  describe('story 34: an enquiry is not scored, and is not relabelled', () => {
+    const enquiryEngine = () => ({
+      name: 'fake',
+      classify: vi.fn().mockResolvedValue({
+        kind: 'enquiry',
+        reason: 'Asks which tools are permitted; the AI Unit would answer it.'
+      }),
+      score: vi.fn()
+    })
+
+    test('AC4: the result carries the kind the classifier returned', async () => {
+      // The one place this change can go wrong silently. The early return used
+      // to hardcode 'access_request', which was true while that was the only
+      // unscored kind — every other test would still pass while every enquiry
+      // was stored and displayed as a licence request.
+      const result = await scoreSubmission(enquiryEngine(), submission)
+
+      expect(result.kind).toBe('enquiry')
+      expect(result.kind).not.toBe('access_request')
+    })
+
+    test('AC5: no grid is produced, and the reason survives in its place', async () => {
+      const result = await scoreSubmission(enquiryEngine(), submission)
+
+      expect(result.scoring).toBeNull()
+      expect(result.reason).toBe(
+        'Asks which tools are permitted; the AI Unit would answer it.'
+      )
+    })
+
+    test('AC7: the scorer is never called for an enquiry', async () => {
+      const engine = enquiryEngine()
+
+      await scoreSubmission(engine, submission)
+
+      expect(engine.score).not.toHaveBeenCalled()
+    })
+
+    test('a kind the service has never been taught is not scored, and not relabelled', async () => {
+      // The branch is an allowlist, so this is the behaviour for any future kind
+      // whose author updates the enum and forgets this file. Under the previous
+      // denylist it fell through to the scorer and came back stamped
+      // 'opportunity' — a grid for something with nothing to rate.
+      const engine = {
+        name: 'fake',
+        classify: vi.fn().mockResolvedValue({
+          kind: 'some_kind_added_later',
+          reason: 'A kind this service predates.'
+        }),
+        score: vi.fn().mockResolvedValue(someValidScoring)
+      }
+
+      const result = await scoreSubmission(engine, submission)
+
+      expect(result.kind).toBe('some_kind_added_later')
+      expect(result.scoring).toBeNull()
+      expect(engine.score).not.toHaveBeenCalled()
+    })
+
+    test('an access request still reports itself as one', async () => {
+      const engine = {
+        name: 'fake',
+        classify: vi.fn().mockResolvedValue({
+          kind: 'access_request',
+          reason: 'Licence request.'
+        }),
+        score: vi.fn()
+      }
+
+      const result = await scoreSubmission(engine, submission)
+
+      expect(result.kind).toBe('access_request')
+      expect(result.scoring).toBeNull()
+    })
+  })
+
   describe('story 36: the classifier decides access_request, not the scorer', () => {
     // A live run on 30 July 2026 produced two results where the classifier said
     // 'opportunity' and the grid that followed set access_request true. The

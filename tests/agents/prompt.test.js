@@ -6,7 +6,10 @@ import {
   MISSING_EVIDENCE_THRESHOLD,
   ROUTING_RULES
 } from '#/domain/rubric.js'
-import { SCORING_SYSTEM_PROMPT } from '#/agents/prompt.js'
+import {
+  SCORING_SYSTEM_PROMPT,
+  CLASSIFIER_SYSTEM_PROMPT
+} from '#/agents/prompt.js'
 
 describe('#agents/prompt', () => {
   test('AC3: prompt contains every criterion key', () => {
@@ -83,6 +86,38 @@ describe('#agents/prompt', () => {
       // scorer only ever sees an opportunity. Asking again produced two
       // self-contradicting results in the live run of 30 July 2026.
       expect(SCORING_SYSTEM_PROMPT).not.toMatch(/flags\.access_request/i)
+    })
+  })
+
+  describe('story 34: the classifier offers a third kind', () => {
+    test('it offers enquiry alongside the other two kinds', () => {
+      expect(CLASSIFIER_SYSTEM_PROMPT).toMatch(/three kinds/i)
+      expect(CLASSIFIER_SYSTEM_PROMPT).toContain('enquiry')
+      expect(CLASSIFIER_SYSTEM_PROMPT).toContain('opportunity')
+      expect(CLASSIFIER_SYSTEM_PROMPT).toContain('access_request')
+    })
+
+    test('it says which way to fall when a submission could be read either way', () => {
+      // The new kind becomes a dustbin without this. An opportunity swallowed
+      // as an enquiry is never scored, so the mistake leaves no trace — unlike a
+      // missed enquiry, which at least produces a grid someone may query.
+      expect(CLASSIFIER_SYSTEM_PROMPT).toMatch(/choose opportunity/i)
+    })
+
+    test('it says which kind wins when a licence ask also questions the rules', () => {
+      // The stub encodes this precedence in the order of its branches. Without
+      // the same rule stated here, the two engines disagree about the same
+      // submission, and only the stub's answer is covered by a test.
+      expect(CLASSIFIER_SYSTEM_PROMPT).toMatch(
+        /an access_request, not an enquiry/i
+      )
+      expect(CLASSIFIER_SYSTEM_PROMPT).toMatch(
+        /without the tool they asked for/i
+      )
+    })
+
+    test('it asks for a reason that stands in for the grid', () => {
+      expect(CLASSIFIER_SYSTEM_PROMPT).toMatch(/instead of a scoring grid/i)
     })
   })
 
