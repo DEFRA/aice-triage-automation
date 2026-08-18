@@ -176,6 +176,36 @@ describe('#agents/engine-stub', () => {
       expect(result.kind).toBe('access_request')
     })
 
+    test('AC3: a licence request that also asks a question is still an access request', async () => {
+      // Both signals fire at once here, and the two kinds are mutually
+      // exclusive, so something has to win. Access requests win: the ask is a
+      // licence for two named people, and answering the rules question instead
+      // leaves them still without the tool. Nothing about that precedence is
+      // self-evident from reading the branches in order, so it is pinned here.
+      const engine = createStubEngine()
+
+      const result = await engine.classify(
+        await readFixture('access-request-with-question.txt')
+      )
+
+      expect(result.kind).toBe('access_request')
+      expect(classificationZod.safeParse(result).success).toBe(true)
+    })
+
+    test('AC3: the question in that request is a live enquiry signal on its own', async () => {
+      // Guards the test above from passing vacuously. Were the fixture's
+      // wording to drift out of the enquiry rule, the precedence assertion
+      // would still be green while testing nothing, so prove the question half
+      // classifies as an enquiry once the named people are taken away.
+      const engine = createStubEngine()
+
+      const result = await engine.classify(
+        'Also, is that allowed under the current architecture guardrails?'
+      )
+
+      expect(result.kind).toBe('enquiry')
+    })
+
     test('AC6: an enquiry classifies with no network call', async () => {
       const engine = createStubEngine()
       const fetchSpy = vi.spyOn(globalThis, 'fetch')

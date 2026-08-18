@@ -82,6 +82,10 @@ export function createStubEngine() {
       // wrong — the same asymmetry the real classifier is told about.
       const isEnquiry = asksQuestion && !describesWork
 
+      // Access requests are checked first, so they win when a submission trips
+      // both signals — a licence ask for named people wrapped in a question
+      // about the rules. Answering the question alone leaves those people
+      // without the tool they asked for, whereas granting access answers both.
       if (isAccessRequest) {
         return {
           kind: 'access_request',
