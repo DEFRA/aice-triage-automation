@@ -104,6 +104,18 @@ describe('#agents/prompt', () => {
       expect(CLASSIFIER_SYSTEM_PROMPT).toMatch(/choose opportunity/i)
     })
 
+    test('it says which kind wins when a licence ask also questions the rules', () => {
+      // The stub encodes this precedence in the order of its branches. Without
+      // the same rule stated here, the two engines disagree about the same
+      // submission, and only the stub's answer is covered by a test.
+      expect(CLASSIFIER_SYSTEM_PROMPT).toMatch(
+        /an access_request, not an enquiry/i
+      )
+      expect(CLASSIFIER_SYSTEM_PROMPT).toMatch(
+        /without the tool they asked for/i
+      )
+    })
+
     test('it asks for a reason that stands in for the grid', () => {
       expect(CLASSIFIER_SYSTEM_PROMPT).toMatch(/instead of a scoring grid/i)
     })
