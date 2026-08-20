@@ -23,7 +23,7 @@ const { createBedrockEngine, redactScoringResult } =
 
 const config = {
   region: 'eu-west-2',
-  scoreModelId: 'anthropic.claude-3-7-sonnet-20250219-v1:0',
+  scoreModelId: 'anthropic.claude-sonnet-4-6',
   classifyModelId: 'anthropic.claude-3-haiku-20240307-v1:0'
 }
 
