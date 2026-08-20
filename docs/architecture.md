@@ -96,11 +96,16 @@ Routes live in `src/routes/` and are aggregated by the router plugin. Business
 logic lives in `src/services/`, kept separate from HTTP concerns so handlers
 stay thin.
 
-| Endpoint            | Handler                 | Notes                                |
-| :------------------ | :---------------------- | :----------------------------------- |
-| `GET /health`       | `src/routes/health.js`  | Liveness probe — required by CDP.    |
-| `GET /example`      | `src/routes/example.js` | Template example (remove as needed). |
-| `GET /example/{id}` | `src/routes/example.js` | Template example (remove as needed). |
+| Endpoint                                 | Handler                     | Notes                                                                                                               |
+| :--------------------------------------- | :-------------------------- | :------------------------------------------------------------------------------------------------------------------ |
+| `GET /health`                            | `src/routes/health.js`      | Liveness probe — required by CDP.                                                                                   |
+| `POST /score`                            | `src/routes/score.js`       | Scores text supplied in the request. Stateless — nothing is read from or written to Mongo.                          |
+| `POST /submissions`                      | `src/routes/submissions.js` | Stores a submission unprocessed. Returns `202`, and is an upsert, so re-posting is safe.                            |
+| `GET /submissions?status=`               | `src/routes/submissions.js` | Lists submissions of one status (`unprocessed` or `scored`), newest first.                                          |
+| `GET /submissions/{submissionId}`        | `src/routes/submissions.js` | One stored submission, or `404`.                                                                                    |
+| `POST /submissions/{submissionId}/score` | `src/routes/submissions.js` | Scores a stored submission under a Mongo lock. Already scored returns the stored result; a held lock returns `409`. |
+| `GET /example`                           | `src/routes/example.js`     | Template example (remove as needed).                                                                                |
+| `GET /example/{id}`                      | `src/routes/example.js`     | Template example (remove as needed).                                                                                |
 
 ```
    HTTP request ──▶ router ──▶ route handler ──▶ service ──▶ request.db ──▶ MongoDB
@@ -114,6 +119,19 @@ strictly at startup. Every setting has a sane default and an environment-
 variable override (`PORT`, `MONGO_URI`, `ENVIRONMENT`, `LOG_*`, `HTTP_PROXY`,
 `TRACING_HEADER`, …). `NODE_ENV` switches log format between human-readable
 `pino-pretty` (development) and structured `ecs` JSON (production).
+
+**On CDP, `NODE_ENV` is not set.** The production image starts the service with
+`node src` rather than the npm `start` script, so nothing exports it and the
+`pino-pretty` default applies — human-readable lines the platform log dashboard
+cannot index. Deployed environments must therefore set `LOG_FORMAT=ecs`
+explicitly in `cdp-app-config`, alongside `LOG_ENABLED` and `LOG_LEVEL`.
+
+`log.redact` is chosen by the same check, and its consequences are easier to
+miss. Off production the list is `req`, `res`, `responseTime` — and hapi-pino is
+configured with `remove: true`, so a deployed service strips those three
+wholesale and logs arrive with no URL, no status code and no timing. Set
+`LOG_REDACT` to the narrower list (`req.headers.authorization`,
+`req.headers.cookie`, `res.headers`) in every deployed environment.
 
 ## Local setup
 

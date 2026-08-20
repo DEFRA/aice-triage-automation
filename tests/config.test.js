@@ -26,6 +26,27 @@ describe('#config', () => {
     const { config } = await import('#/config.js')
     expect(config.get('bedrock.guardrailVersion')).toBe('DRAFT')
   })
+
+  test('redacts req, res and responseTime by default off CDP', () => {
+    expect(config.get('log.redact')).toEqual(['req', 'res', 'responseTime'])
+  })
+
+  // Without this binding a deployed service is stuck with the NODE_ENV-chosen
+  // default, and CDP never sets NODE_ENV — so its logs would carry no URL, no
+  // status code and no timing, with no way to fix it from cdp-app-config.
+  test('takes the redact list from LOG_REDACT, splitting on commas', async () => {
+    vi.stubEnv(
+      'LOG_REDACT',
+      'req.headers.authorization,req.headers.cookie,res.headers'
+    )
+    const { config } = await import('#/config.js')
+    expect(config.get('log.redact')).toEqual([
+      'req.headers.authorization',
+      'req.headers.cookie',
+      'res.headers'
+    ])
+  })
+
   test('rejects guardrailId without guardrailVersion', async () => {
     vi.stubEnv('BEDROCK_GUARDRAIL_ID', 'gr-123')
     vi.stubEnv('BEDROCK_GUARDRAIL_VERSION', '')

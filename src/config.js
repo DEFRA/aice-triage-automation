@@ -69,11 +69,18 @@ export const config = convict({
       env: 'LOG_FORMAT'
     },
     redact: {
-      doc: 'Log paths to redact',
+      // The default is chosen by NODE_ENV, which CDP never sets — the production
+      // image runs `node src`, not the npm start script. So a deployed service
+      // takes the non-production list, and that list removes `req`, `res` and
+      // `responseTime` wholesale: ECS-shaped lines with no URL, no status code
+      // and no timing. The env binding is what lets a deployed environment ask
+      // for the narrower list instead. Comma-separated; convict splits it.
+      doc: 'Log paths to redact. Comma-separated when set from the environment',
       format: Array,
       default: isProduction
         ? ['req.headers.authorization', 'req.headers.cookie', 'res.headers']
-        : ['req', 'res', 'responseTime']
+        : ['req', 'res', 'responseTime'],
+      env: 'LOG_REDACT'
     }
   },
   mongo: {
