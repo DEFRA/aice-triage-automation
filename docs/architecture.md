@@ -134,6 +134,16 @@ Verify rather than assume, if the base image version ever moves:
 docker run --rm --entrypoint sh defradigital/node:<tag> -c 'echo $NODE_ENV'
 ```
 
+**Bedrock calls are non-streaming, deliberately.** `@strands-agents/sdk` takes
+the `ConverseStream` API unless a model is constructed with `stream: false`, and
+`ConverseStream` requires `bedrock:InvokeModelWithResponseStream` — an action the
+CDP task role is not granted, though plain `bedrock:InvokeModel` is. Deployed
+scoring fails with `AccessDeniedException` without it. Nothing here streams to a
+user, so the streaming API buys nothing. Local runs cannot catch this: on a
+laptop the SDK authenticates with `AWS_BEARER_TOKEN_BEDROCK`, whose permissions
+are the API key's rather than the task role's.
+`tests/agents/engine-bedrock.test.js` asserts both models stay non-streaming.
+
 **The production image installs with `npm ci --omit=dev`.** Anything in
 `devDependencies` is absent at runtime, so a static `import` of one crashes the
 container on boot with `ERR_MODULE_NOT_FOUND` — before any config is read, which

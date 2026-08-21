@@ -204,6 +204,18 @@ describe('#agents/engine-bedrock', () => {
     })
   })
 
+  test('both models are constructed non-streaming', () => {
+    createBedrockEngine(config)
+
+    expect(bedrockModelInstances).toHaveLength(2)
+    // Not a style preference. The SDK takes ConverseStream unless stream is
+    // explicitly false, and ConverseStream needs
+    // bedrock:InvokeModelWithResponseStream, which the CDP task role is not
+    // granted. Deployed scoring fails with AccessDeniedException without this.
+    expect(bedrockModelInstances[0]._options.stream).toBe(false)
+    expect(bedrockModelInstances[1]._options.stream).toBe(false)
+  })
+
   test('does not pass guardrailConfig when guardrail is not configured', () => {
     createBedrockEngine({
       region: 'eu-west-2',
