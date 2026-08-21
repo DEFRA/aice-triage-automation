@@ -52,6 +52,18 @@ function toGuardrailConfig({ guardrailId, guardrailVersion }) {
  * do NOT also pass an apiKey option: that sets a second Authorization header
  * and Bedrock rejects the request.
  *
+ * Both models are constructed with `stream: false`. The SDK streams by default
+ * — it takes the ConverseStream API unless the option is explicitly false — and
+ * ConverseStream requires `bedrock:InvokeModelWithResponseStream`, which the CDP
+ * task role is not granted. The first deployed scoring call failed on exactly
+ * that, while `bedrock:InvokeModel` was allowed all along. Nothing here streams
+ * to a user: both calls build a structured object and return it whole, so the
+ * streaming API buys nothing and costs a permission we do not have.
+ *
+ * Local runs never caught it. On a laptop the SDK authenticates with
+ * AWS_BEARER_TOKEN_BEDROCK, whose permissions are the API key's rather than the
+ * task role's.
+ *
  * @param {{
  *   region: string,
  *   scoreModelId: string,
@@ -68,6 +80,7 @@ export function createBedrockEngine(bedrockConfig) {
     region,
     modelId: scoreModelId,
     maxTokens: 4096,
+    stream: false,
     guardrailConfig: toGuardrailConfig(bedrockConfig)
   })
 
@@ -75,6 +88,7 @@ export function createBedrockEngine(bedrockConfig) {
     region,
     modelId: classifyModelId,
     maxTokens: 512,
+    stream: false,
     guardrailConfig: toGuardrailConfig(bedrockConfig)
   })
 
