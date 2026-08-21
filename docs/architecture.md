@@ -96,11 +96,16 @@ Routes live in `src/routes/` and are aggregated by the router plugin. Business
 logic lives in `src/services/`, kept separate from HTTP concerns so handlers
 stay thin.
 
-| Endpoint            | Handler                 | Notes                                |
-| :------------------ | :---------------------- | :----------------------------------- |
-| `GET /health`       | `src/routes/health.js`  | Liveness probe — required by CDP.    |
-| `GET /example`      | `src/routes/example.js` | Template example (remove as needed). |
-| `GET /example/{id}` | `src/routes/example.js` | Template example (remove as needed). |
+| Endpoint                                 | Handler                     | Notes                                                                                                               |
+| :--------------------------------------- | :-------------------------- | :------------------------------------------------------------------------------------------------------------------ |
+| `GET /health`                            | `src/routes/health.js`      | Liveness probe — required by CDP.                                                                                   |
+| `POST /score`                            | `src/routes/score.js`       | Scores text supplied in the request. Stateless — nothing is read from or written to Mongo.                          |
+| `POST /submissions`                      | `src/routes/submissions.js` | Stores a submission unprocessed. Returns `202`, and is an upsert, so re-posting is safe.                            |
+| `GET /submissions?status=`               | `src/routes/submissions.js` | Lists submissions of one status (`unprocessed` or `scored`), newest first.                                          |
+| `GET /submissions/{submissionId}`        | `src/routes/submissions.js` | One stored submission, or `404`.                                                                                    |
+| `POST /submissions/{submissionId}/score` | `src/routes/submissions.js` | Scores a stored submission under a Mongo lock. Already scored returns the stored result; a held lock returns `409`. |
+| `GET /example`                           | `src/routes/example.js`     | Template example (remove as needed).                                                                                |
+| `GET /example/{id}`                      | `src/routes/example.js`     | Template example (remove as needed).                                                                                |
 
 ```
    HTTP request ──▶ router ──▶ route handler ──▶ service ──▶ request.db ──▶ MongoDB
@@ -114,6 +119,27 @@ strictly at startup. Every setting has a sane default and an environment-
 variable override (`PORT`, `MONGO_URI`, `ENVIRONMENT`, `LOG_*`, `HTTP_PROXY`,
 `TRACING_HEADER`, …). `NODE_ENV` switches log format between human-readable
 `pino-pretty` (development) and structured `ecs` JSON (production).
+
+**`NODE_ENV` comes from the base image, not from us.** The production image
+starts the service with `node src` rather than the npm `start` script, so
+nothing in this repo exports it — but `defradigital/node` sets
+`NODE_ENV=production` itself, and `defradigital/node-development` sets
+`development`. A deployed container therefore already logs `ecs` JSON and
+already takes the narrow `log.redact` list. `LOG_FORMAT` and `LOG_REDACT` are
+available in `cdp-app-config` as operator control, not as required corrections.
+
+Verify rather than assume, if the base image version ever moves:
+
+```bash
+docker run --rm --entrypoint sh defradigital/node:<tag> -c 'echo $NODE_ENV'
+```
+
+**The production image installs with `npm ci --omit=dev`.** Anything in
+`devDependencies` is absent at runtime, so a static `import` of one crashes the
+container on boot with `ERR_MODULE_NOT_FOUND` — before any config is read, which
+means no environment variable can rescue it. Load such packages lazily on the
+branch that needs them, as `src/plugins/logger-options.js` does for
+`pino-pretty`. `tests/production-dependencies.test.js` guards this.
 
 ## Local setup
 

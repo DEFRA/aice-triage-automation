@@ -69,11 +69,18 @@ export const config = convict({
       env: 'LOG_FORMAT'
     },
     redact: {
-      doc: 'Log paths to redact',
+      // The default is chosen by NODE_ENV, which the defradigital base images
+      // set themselves: `production` in defradigital/node, `development` in
+      // defradigital/node-development. A deployed container therefore already
+      // takes the narrow list below, and the env binding is operator control
+      // rather than a fix — set LOG_REDACT to widen or narrow it per
+      // environment. Comma-separated; convict splits it.
+      doc: 'Log paths to redact. Comma-separated when set from the environment',
       format: Array,
       default: isProduction
         ? ['req.headers.authorization', 'req.headers.cookie', 'res.headers']
-        : ['req', 'res', 'responseTime']
+        : ['req', 'res', 'responseTime'],
+      env: 'LOG_REDACT'
     }
   },
   mongo: {

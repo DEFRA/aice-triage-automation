@@ -26,6 +26,27 @@ describe('#config', () => {
     const { config } = await import('#/config.js')
     expect(config.get('bedrock.guardrailVersion')).toBe('DRAFT')
   })
+
+  test('redacts req, res and responseTime when NODE_ENV is not production', () => {
+    expect(config.get('log.redact')).toEqual(['req', 'res', 'responseTime'])
+  })
+
+  // The binding is operator control, not a fix: the defradigital base images set
+  // NODE_ENV themselves, so a deployed container already takes the narrow list.
+  // LOG_REDACT is what lets an environment change it from cdp-app-config.
+  test('takes the redact list from LOG_REDACT, splitting on commas', async () => {
+    vi.stubEnv(
+      'LOG_REDACT',
+      'req.headers.authorization,req.headers.cookie,res.headers'
+    )
+    const { config } = await import('#/config.js')
+    expect(config.get('log.redact')).toEqual([
+      'req.headers.authorization',
+      'req.headers.cookie',
+      'res.headers'
+    ])
+  })
+
   test('rejects guardrailId without guardrailVersion', async () => {
     vi.stubEnv('BEDROCK_GUARDRAIL_ID', 'gr-123')
     vi.stubEnv('BEDROCK_GUARDRAIL_VERSION', '')
