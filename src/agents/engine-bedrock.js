@@ -62,20 +62,30 @@ function toGuardrailConfig({ guardrailId, guardrailVersion }) {
  * @returns {import('./engine.js').Engine}
  */
 export function createBedrockEngine(bedrockConfig) {
-  const { region, scoreModelId, classifyModelId } = bedrockConfig
+  const {
+    region,
+    scoreModelId,
+    classifyModelId,
+    guardrailId,
+    guardrailVersion
+  } = bedrockConfig
+
+  // Both models take the same guardrail, so resolve it once. undefined when no
+  // guardrail is configured, which leaves BedrockModel's own default in place.
+  const guardrailConfig = toGuardrailConfig({ guardrailId, guardrailVersion })
 
   const scoreModel = new BedrockModel({
     region,
     modelId: scoreModelId,
     maxTokens: 4096,
-    guardrailConfig: toGuardrailConfig(bedrockConfig)
+    guardrailConfig
   })
 
   const classifyModel = new BedrockModel({
     region,
     modelId: classifyModelId,
     maxTokens: 512,
-    guardrailConfig: toGuardrailConfig(bedrockConfig)
+    guardrailConfig
   })
 
   return {
