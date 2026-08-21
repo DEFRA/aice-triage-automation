@@ -27,13 +27,13 @@ describe('#config', () => {
     expect(config.get('bedrock.guardrailVersion')).toBe('DRAFT')
   })
 
-  test('redacts req, res and responseTime by default off CDP', () => {
+  test('redacts req, res and responseTime when NODE_ENV is not production', () => {
     expect(config.get('log.redact')).toEqual(['req', 'res', 'responseTime'])
   })
 
-  // Without this binding a deployed service is stuck with the NODE_ENV-chosen
-  // default, and CDP never sets NODE_ENV — so its logs would carry no URL, no
-  // status code and no timing, with no way to fix it from cdp-app-config.
+  // The binding is operator control, not a fix: the defradigital base images set
+  // NODE_ENV themselves, so a deployed container already takes the narrow list.
+  // LOG_REDACT is what lets an environment change it from cdp-app-config.
   test('takes the redact list from LOG_REDACT, splitting on commas', async () => {
     vi.stubEnv(
       'LOG_REDACT',

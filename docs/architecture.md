@@ -120,18 +120,26 @@ variable override (`PORT`, `MONGO_URI`, `ENVIRONMENT`, `LOG_*`, `HTTP_PROXY`,
 `TRACING_HEADER`, …). `NODE_ENV` switches log format between human-readable
 `pino-pretty` (development) and structured `ecs` JSON (production).
 
-**On CDP, `NODE_ENV` is not set.** The production image starts the service with
-`node src` rather than the npm `start` script, so nothing exports it and the
-`pino-pretty` default applies — human-readable lines the platform log dashboard
-cannot index. Deployed environments must therefore set `LOG_FORMAT=ecs`
-explicitly in `cdp-app-config`, alongside `LOG_ENABLED` and `LOG_LEVEL`.
+**`NODE_ENV` comes from the base image, not from us.** The production image
+starts the service with `node src` rather than the npm `start` script, so
+nothing in this repo exports it — but `defradigital/node` sets
+`NODE_ENV=production` itself, and `defradigital/node-development` sets
+`development`. A deployed container therefore already logs `ecs` JSON and
+already takes the narrow `log.redact` list. `LOG_FORMAT` and `LOG_REDACT` are
+available in `cdp-app-config` as operator control, not as required corrections.
 
-`log.redact` is chosen by the same check, and its consequences are easier to
-miss. Off production the list is `req`, `res`, `responseTime` — and hapi-pino is
-configured with `remove: true`, so a deployed service strips those three
-wholesale and logs arrive with no URL, no status code and no timing. Set
-`LOG_REDACT` to the narrower list (`req.headers.authorization`,
-`req.headers.cookie`, `res.headers`) in every deployed environment.
+Verify rather than assume, if the base image version ever moves:
+
+```bash
+docker run --rm --entrypoint sh defradigital/node:<tag> -c 'echo $NODE_ENV'
+```
+
+**The production image installs with `npm ci --omit=dev`.** Anything in
+`devDependencies` is absent at runtime, so a static `import` of one crashes the
+container on boot with `ERR_MODULE_NOT_FOUND` — before any config is read, which
+means no environment variable can rescue it. Load such packages lazily on the
+branch that needs them, as `src/plugins/logger-options.js` does for
+`pino-pretty`. `tests/production-dependencies.test.js` guards this.
 
 ## Local setup
 

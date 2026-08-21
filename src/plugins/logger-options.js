@@ -1,5 +1,4 @@
 import { ecsFormat } from '@elastic/ecs-pino-format'
-import pinoPretty from 'pino-pretty'
 import { config } from '#/config.js'
 import { getTraceId } from '@defra/hapi-tracing'
 
@@ -21,8 +20,14 @@ const formatters = {
 // (see loggerStream below) rather than as a worker-thread transport. pino's
 // transport worker (thread-stream) crashes under `node --watch` on Node 24,
 // which breaks `npm run dev`. A direct stream avoids the worker thread entirely.
+//
+// The import is dynamic because pino-pretty is a devDependency: the production
+// image installs with `npm ci --omit=dev`, so the package is not there. A static
+// import crashes that image on boot whatever LOG_FORMAT says.
 export const loggerStream =
-  logConfig.format === 'pino-pretty' ? pinoPretty() : undefined
+  logConfig.format === 'pino-pretty'
+    ? (await import('pino-pretty')).default()
+    : undefined
 
 export const loggerOptions = {
   enabled: logConfig.isEnabled,
