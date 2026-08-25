@@ -38,13 +38,27 @@ export async function generateSubmissionId(db, date = new Date()) {
   const year = date.getUTCFullYear()
   const prefix = `SUB-${year}-`
 
-  const count = await db
+  // Derived from the highest existing id in the year, not a count, so a gap
+  // left by a deleted or hand-picked id (e.g. real intake's POST /submissions
+  // accepts an arbitrary submissionId) can't produce a duplicate. Anchored to
+  // exactly 4 digits so a longer suffix in some other id shape can't match.
+  const highest = await db
     .collection(SUBMISSIONS_COLLECTION)
-    .countDocuments({ submissionId: { $regex: `^${prefix}` } })
+    .find({ submissionId: { $regex: `^${prefix}\\d{4}$` } })
+    .sort({ submissionId: -1 })
+    .limit(1)
+    .toArray()
 
-  const sequence = (count + 1).toString().padStart(4, '0')
+  const highestSequence = highest.length
+    ? Number(highest[0].submissionId.slice(prefix.length))
+    : 0
+  const nextSequence = highestSequence + 1
 
-  return `${prefix}${sequence}`
+  if (nextSequence > 9999) {
+    throw new Error(`No SUB-${year}-NNNN ids left: sequence exhausted`)
+  }
+
+  return `${prefix}${nextSequence.toString().padStart(4, '0')}`
 }
 export async function markScored(db, submissionId, result) {
   await db.collection('submissions').updateOne(

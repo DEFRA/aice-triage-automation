@@ -1,8 +1,19 @@
+vi.mock('#/services/submissions.js', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    generateSubmissionId: vi.fn(actual.generateSubmissionId)
+  }
+})
+
+import { generateSubmissionId } from '#/services/submissions.js'
+
 describe('#_dev/seed-submission route (development mode)', () => {
   let server
 
   beforeAll(async () => {
     vi.stubEnv('NODE_ENV', 'development')
+    vi.stubEnv('LOG_ENABLED', 'false')
     vi.resetModules()
 
     const { createServer } = await import('#/server.js')
@@ -18,6 +29,7 @@ describe('#_dev/seed-submission route (development mode)', () => {
 
   beforeEach(async () => {
     await server.db.collection('submissions').deleteMany({})
+    generateSubmissionId.mockClear()
   })
 
   describe('POST /_dev/seed-submission', () => {
@@ -91,6 +103,31 @@ describe('#_dev/seed-submission route (development mode)', () => {
       expect(response.statusCode).toBe(200)
       expect(response.result).toHaveLength(1)
       expect(response.result[0].text).toBe('Local test submission')
+    })
+
+    test('retries with a fresh id instead of silently returning a colliding submission', async () => {
+      const first = await server.inject({
+        method: 'POST',
+        url: '/_dev/seed-submission',
+        payload: { text: 'existing' }
+      })
+      const existingId = first.result.submissionId
+
+      // Force the next generateSubmissionId call to hand back an id that
+      // already exists, simulating the race/gap scenarios the id generator
+      // can't fully rule out on its own. The handler must detect the failed
+      // upsert and retry rather than returning the pre-existing document.
+      generateSubmissionId.mockResolvedValueOnce(existingId)
+
+      const response = await server.inject({
+        method: 'POST',
+        url: '/_dev/seed-submission',
+        payload: { text: 'brand new' }
+      })
+
+      expect(response.statusCode).toBe(201)
+      expect(response.result.submissionId).not.toBe(existingId)
+      expect(response.result.text).toBe('brand new')
     })
   })
 })

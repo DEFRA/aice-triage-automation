@@ -1,3 +1,4 @@
+import Boom from '@hapi/boom'
 import Joi from 'joi'
 
 import {
@@ -5,6 +6,8 @@ import {
   findSubmission,
   generateSubmissionId
 } from '#/services/submissions.js'
+
+const MAX_SEED_ATTEMPTS = 5
 
 // Dev-only convenience route: lets a developer create an unprocessed
 // submission without going through the real intake flow, so the frontend
@@ -24,13 +27,29 @@ export const dev = [
     },
     handler: async (request, h) => {
       const { text, submittedAt } = request.payload
-      const submissionId = await generateSubmissionId(request.db)
 
-      await insertSubmission(request.db, { submissionId, text, submittedAt })
+      // insertSubmission upserts on submissionId, so a collision with an
+      // existing id is a silent no-op (matchedCount: 1, upsertedCount: 0)
+      // rather than a duplicate-key error. Only upsertedId tells us the
+      // insert actually happened, so retry with a fresh id on collision
+      // instead of trusting generateSubmissionId to always be unique.
+      for (let attempt = 0; attempt < MAX_SEED_ATTEMPTS; attempt++) {
+        const submissionId = await generateSubmissionId(request.db)
+        const result = await insertSubmission(request.db, {
+          submissionId,
+          text,
+          submittedAt
+        })
 
-      const entity = await findSubmission(request.db, submissionId)
+        if (result.upsertedId) {
+          const entity = await findSubmission(request.db, submissionId)
+          return h.response(entity).code(201)
+        }
+      }
 
-      return h.response(entity).code(201)
+      return Boom.conflict(
+        'Could not generate a unique submissionId, please retry'
+      )
     }
   }
 ]

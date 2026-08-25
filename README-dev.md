@@ -62,4 +62,10 @@ Responds `201` with the created submission document.
   so seeded submissions show up in `GET /submissions` and can be scored like
   any other submission.
 - `_dev/*` routes are not registered unless `NODE_ENV=development`, so they
-  never exist in `test` or `production`.
+  never exist in `test` or `production`. That `NODE_ENV` check is the _only_
+  guard on this endpoint — there is no auth plugin in `src/plugins` — so it
+  must never be reachable with `NODE_ENV=development` set outside a local
+  machine. The `Dockerfile`'s `development` stage (`npm run docker:dev` →
+  `npm run dev` → `NODE_ENV=development`, also set explicitly by
+  `compose.yml`) must only ever be built for local use; the `production`
+  stage (`CMD ["node", "src"]`, no `NODE_ENV`) does not set it and is safe.
