@@ -33,6 +33,19 @@ export function findSubmission(db, submissionId) {
     .collection(SUBMISSIONS_COLLECTION)
     .findOne({ submissionId }, { projection: { _id: 0 } })
 }
+
+export async function generateSubmissionId(db, date = new Date()) {
+  const year = date.getUTCFullYear()
+  const prefix = `SUB-${year}-`
+
+  const count = await db
+    .collection(SUBMISSIONS_COLLECTION)
+    .countDocuments({ submissionId: { $regex: `^${prefix}` } })
+
+  const sequence = (count + 1).toString().padStart(4, '0')
+
+  return `${prefix}${sequence}`
+}
 export async function markScored(db, submissionId, result) {
   await db.collection('submissions').updateOne(
     { submissionId },
