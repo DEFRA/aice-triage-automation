@@ -8,6 +8,7 @@ convict.addFormats(convictFormatWithValidator)
 
 const isProduction = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
+const isDevelopment = process.env.NODE_ENV === 'development'
 
 export const config = convict({
   serviceVersion: {
@@ -177,6 +178,11 @@ export const config = convict({
     format: String,
     default: '.local/submissions',
     env: 'SUBMISSIONS_DIR'
+  },
+  isDevelopment: {
+    doc: 'True when NODE_ENV=development. Enables dev-only routes such as POST /_dev/seed-submission',
+    format: Boolean,
+    default: isDevelopment
   }
 })
 

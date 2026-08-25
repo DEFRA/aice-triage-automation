@@ -4,7 +4,8 @@ import {
   insertSubmission,
   findSubmissions,
   findSubmission,
-  markScored
+  markScored,
+  generateSubmissionId
 } from '#/services/submissions.js'
 import { createIndexes } from '#/plugins/mongodb.js'
 
@@ -176,5 +177,97 @@ describe('#services/submissions', () => {
     expect(submissionIdIndex).toBeDefined()
     expect(submissionIdIndex.unique).toBe(true)
     expect(statusIndex).toBeDefined()
+  })
+
+  describe('generateSubmissionId', () => {
+    test('returns a SUB-YYYY-NNNN id for the given date', async () => {
+      const id = await generateSubmissionId(
+        db,
+        new Date('2026-01-01T00:00:00.000Z')
+      )
+
+      expect(id).toBe('SUB-2026-0001')
+    })
+
+    test('increments the sequence for existing submissions in the same year', async () => {
+      await db.collection('submissions').insertMany([
+        {
+          submissionId: 'SUB-2026-0001',
+          text: 'a',
+          status: 'unprocessed',
+          receivedAt: new Date('2026-01-01T00:00:00.000Z')
+        },
+        {
+          submissionId: 'SUB-2026-0002',
+          text: 'b',
+          status: 'unprocessed',
+          receivedAt: new Date('2026-01-02T00:00:00.000Z')
+        }
+      ])
+
+      const id = await generateSubmissionId(
+        db,
+        new Date('2026-06-01T00:00:00.000Z')
+      )
+
+      expect(id).toBe('SUB-2026-0003')
+    })
+
+    test('starts a fresh sequence for a different year', async () => {
+      await db.collection('submissions').insertOne({
+        submissionId: 'SUB-2025-0009',
+        text: 'a',
+        status: 'unprocessed',
+        receivedAt: new Date('2025-01-01T00:00:00.000Z')
+      })
+
+      const id = await generateSubmissionId(
+        db,
+        new Date('2026-01-01T00:00:00.000Z')
+      )
+
+      expect(id).toBe('SUB-2026-0001')
+    })
+
+    test('does not collide when an earlier id in the sequence has been deleted', async () => {
+      // SUB-2026-0002 deleted after being seeded and removed, leaving a gap.
+      await db.collection('submissions').insertMany([
+        {
+          submissionId: 'SUB-2026-0001',
+          text: 'a',
+          status: 'unprocessed',
+          receivedAt: new Date('2026-01-01T00:00:00.000Z')
+        },
+        {
+          submissionId: 'SUB-2026-0003',
+          text: 'c',
+          status: 'unprocessed',
+          receivedAt: new Date('2026-01-03T00:00:00.000Z')
+        }
+      ])
+
+      const id = await generateSubmissionId(
+        db,
+        new Date('2026-06-01T00:00:00.000Z')
+      )
+
+      expect(id).toBe('SUB-2026-0004')
+    })
+
+    test('ignores ids with a longer sequence suffix when computing the next one', async () => {
+      await db.collection('submissions').insertOne({
+        submissionId: 'SUB-2026-00019',
+        text: 'a',
+        status: 'unprocessed',
+        receivedAt: new Date('2026-01-01T00:00:00.000Z')
+      })
+
+      const id = await generateSubmissionId(
+        db,
+        new Date('2026-06-01T00:00:00.000Z')
+      )
+
+      expect(id).toBe('SUB-2026-0001')
+    })
   })
 })

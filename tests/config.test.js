@@ -54,4 +54,14 @@ describe('#config', () => {
       /guardrailId|guardrailVersion/
     )
   })
+
+  test('isDevelopment is false by default (NODE_ENV=test)', () => {
+    expect(config.get('isDevelopment')).toBe(false)
+  })
+
+  test('isDevelopment is true when NODE_ENV=development', async () => {
+    vi.stubEnv('NODE_ENV', 'development')
+    const { config: devConfig } = await import('#/config.js')
+    expect(devConfig.get('isDevelopment')).toBe(true)
+  })
 })
