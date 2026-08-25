@@ -185,6 +185,16 @@ git config --global core.autocrlf false
 | `GET: /example    `  | Example API (remove as needed) |
 | `GET: /example/<id>` | Example API (remove as needed) |
 
+### Service-to-service authentication
+
+`POST /submissions` is the one route that authenticates its caller, using an AWS
+WebIdentity token presented as `Authorization: Bearer …`. It has three modes —
+`off`, `audit`, `enforce` — set by `AUTH_MODE`, which **defaults to `off`**, so
+nothing changes locally or in tests. See
+[Service-to-service authentication](./docs/architecture.md#service-to-service-authentication)
+in the architecture guide for how it works, what is deliberately left open, and
+how a rollout moves through the modes.
+
 ## Development helpers
 
 ### MongoDB Locks
@@ -232,11 +242,16 @@ Helper methods are also available in `/src/helpers/mongo-lock.js`.
 
 ### Proxy
 
-We are using forward-proxy which is set up by default. To make use of this: `import { fetch } from 'undici'` then
-because of the `setGlobalDispatcher(new ProxyAgent(proxyUrl))` calls will use the ProxyAgent Dispatcher
+All outbound egress in deployed environments goes through CDP's forward proxy,
+whose URL arrives as `HTTP_PROXY` and `HTTPS_PROXY`.
 
-If you are not using Wreck, Axios or Undici or a similar http that uses `Request`. Then you may have to provide the
-proxy dispatcher:
+**Nothing in this repository sets a global dispatcher**, despite what the CDP
+template's wording here used to imply. Deployed environments do set
+`NODE_USE_ENV_PROXY=1` — it is in this service's `defaults.env` in
+`cdp-app-config` — so Node 24's global `fetch` honours those variables there.
+Nothing in this repository guarantees that, though, and it is absent locally, so
+**give each new outbound call the proxy explicitly rather than relying on it**.
+`src/plugins/jwt-auth.js` does this for the JWKS fetch, in `keySetFetch`.
 
 To add the dispatcher to your own client:
 

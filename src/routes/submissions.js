@@ -18,6 +18,13 @@ export const submissions = [
     method: 'POST',
     path: '/submissions',
     options: {
+      // The only authenticated route: it is the one a public-facing service
+      // posts to. The other three are called by aice-triage-frontend, which
+      // sends no token; giving it one is work in a third repository. Because
+      // the strategy is per route rather than the default, a route added later
+      // is open unless somebody remembers. See "Service-to-service
+      // authentication" in docs/architecture.md.
+      auth: 'jwt',
       validate: {
         payload: Joi.object({
           submissionId: Joi.string().min(1).required(),

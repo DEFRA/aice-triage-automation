@@ -173,6 +173,44 @@ export const config = convict({
       env: 'BEDROCK_GUARDRAIL_VERSION'
     }
   },
+  auth: {
+    mode: {
+      doc: 'How POST /submissions treats the caller token. off: not looked at. audit: validated and logged, never rejected. enforce: validated and rejected',
+      format: ['off', 'audit', 'enforce'],
+      default: 'off',
+      env: 'AUTH_MODE'
+    },
+    audience: {
+      doc: 'The audience the caller asks STS for, and the only one accepted here',
+      format: String,
+      default: 'aice-triage-automation',
+      env: 'AUTH_JWT_AUDIENCE'
+    },
+    issuer: {
+      doc: 'Expected token issuer. Set by the platform in every deployed environment',
+      format: String,
+      default: '',
+      env: 'CDP_JWT_ISSUER'
+    },
+    jwksUri: {
+      doc: 'Where the platform publishes the public keys the token is signed with',
+      format: String,
+      default: '',
+      env: 'CDP_JWT_JWKS_URI'
+    },
+    awsAccount: {
+      doc: 'AWS account number the caller roles live in. Differs per environment',
+      format: String,
+      default: '',
+      env: 'AWS_ACCOUNT'
+    },
+    allowedCallers: {
+      doc: 'CDP service names permitted to call, taken from a token\u2019s sub claim rather than guessed. Comma-separated when set from the environment',
+      format: Array,
+      default: ['service-manual-ui'],
+      env: 'AUTH_ALLOWED_CALLERS'
+    }
+  },
   submissionsDir: {
     doc: 'Local directory of example triage submissions. Git-ignored — real submissions are never committed',
     format: String,
@@ -201,4 +239,20 @@ if (
   throw new Error(
     'bedrock.guardrailVersion must be set when bedrock.guardrailId is set'
   )
+}
+
+// The platform sets these three in every deployed environment and nothing sets
+// them locally, so they have no useful default. Validating a token without them
+// is not possible, and failing at boot says so once rather than turning every
+// intake request into a 401 that reads as an authentication bug.
+if (config.get('auth.mode') !== 'off') {
+  const missing = ['issuer', 'jwksUri', 'awsAccount'].filter(
+    (setting) => config.get(`auth.${setting}`) === ''
+  )
+
+  if (missing.length > 0) {
+    throw new Error(
+      `auth.${missing.join(', auth.')} must be set when auth.mode is not off`
+    )
+  }
 }
