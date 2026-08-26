@@ -57,6 +57,62 @@ describe('#submissions route', () => {
       expect(stored.receivedAt).toBeInstanceOf(Date)
     })
 
+    test('stores metadata when the caller sends it', async () => {
+      const response = await server.inject({
+        method: 'POST',
+        url: '/submissions',
+        payload: {
+          submissionId: 'sub-meta-001',
+          text: 'Microsite submission text',
+          submittedAt: '2026-07-22T09:15:00.000Z',
+          metadata: { submitterEmail: 'someone@defra.gov.uk' }
+        }
+      })
+
+      expect(response.statusCode).toBe(202)
+
+      const stored = await server.db
+        .collection('submissions')
+        .findOne({ submissionId: 'sub-meta-001' })
+
+      expect(stored.metadata).toEqual({
+        submitterEmail: 'someone@defra.gov.uk'
+      })
+    })
+
+    test('leaves the field off entirely when the caller sends no metadata', async () => {
+      await server.inject({
+        method: 'POST',
+        url: '/submissions',
+        payload: {
+          submissionId: 'sub-meta-002',
+          text: 'Microsite submission text'
+        }
+      })
+
+      const stored = await server.db
+        .collection('submissions')
+        .findOne({ submissionId: 'sub-meta-002' })
+
+      // Absent, not null: every document written before metadata existed has
+      // no such field, and one written without it should look the same.
+      expect(stored).not.toHaveProperty('metadata')
+    })
+
+    test('rejects metadata that is not an object', async () => {
+      const response = await server.inject({
+        method: 'POST',
+        url: '/submissions',
+        payload: {
+          submissionId: 'sub-meta-003',
+          text: 'Microsite submission text',
+          metadata: 'someone@defra.gov.uk'
+        }
+      })
+
+      expect(response.statusCode).toBe(400)
+    })
+
     test('posting the same payload twice returns 202 both times and stores one document', async () => {
       const payload = {
         submissionId: 'sub-dup-001',
@@ -273,6 +329,35 @@ describe('#submissions route', () => {
         }
       }
     }
+
+    test('never passes metadata to the scorer', async () => {
+      await server.db.collection('submissions').insertOne({
+        submissionId: 'sub-meta-score',
+        text: 'We want AI for triage',
+        submittedAt: '2026-07-22T09:15:00.000Z',
+        receivedAt: new Date('2026-07-22T09:16:00.000Z'),
+        status: 'unprocessed',
+        metadata: { submitterEmail: 'someone@defra.gov.uk' }
+      })
+
+      chooseEngine.mockReturnValue(fakeEngine)
+      scoreSubmission.mockResolvedValue({ ...fakeResult, id: 'sub-meta-score' })
+
+      await server.inject({
+        method: 'POST',
+        url: '/submissions/sub-meta-score/score'
+      })
+
+      // The whole reason metadata is a separate field: what the model sees is
+      // built here, key by key, rather than being the stored document.
+      const [, scored] = scoreSubmission.mock.calls[0]
+
+      expect(scored).toEqual({
+        id: 'sub-meta-score',
+        text: 'We want AI for triage'
+      })
+      expect(JSON.stringify(scored)).not.toContain('someone@defra.gov.uk')
+    })
 
     test('AC1: scoring unprocessed submission returns 200 and persists scored state', async () => {
       await server.db.collection('submissions').insertOne({

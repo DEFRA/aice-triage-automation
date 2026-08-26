@@ -118,6 +118,24 @@ stay thin.
                                   (src/routes)   (src/services)
 ```
 
+### What a submission carries
+
+`POST /submissions` takes `submissionId`, `text`, an optional `submittedAt`, and
+an optional `metadata` object. Unknown keys are rejected, so a caller wanting to
+send anything else needs a change here first.
+
+The split between `text` and `metadata` is the point. `text` is what a hosted
+model reads; `metadata` is tracing detail that never does. The scoring handler
+builds `{ id, text }` key by key from the stored document rather than passing the
+document through, so nothing kept in `metadata` can reach a prompt by accident —
+a property a test pins rather than a convention to remember.
+
+That is what makes it the right home for the submitter's email address, which
+`service-manual-ui` deliberately keeps out of `text`. Two consequences worth
+knowing before putting one there: it lands in this database, which otherwise
+holds no personal data, and `GET /submissions` returns whole documents, so
+anything in `metadata` is visible to `aice-triage-frontend`.
+
 ### Service-to-service authentication
 
 `POST /submissions` is the route a public-facing service posts to: the AI
