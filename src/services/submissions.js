@@ -3,7 +3,7 @@ export const SUBMISSION_STATUSES = ['unprocessed', 'scored']
 
 export async function insertSubmission(
   db,
-  { submissionId, text, submittedAt }
+  { submissionId, text, submittedAt, metadata }
 ) {
   return db.collection(SUBMISSIONS_COLLECTION).updateOne(
     { submissionId },
@@ -13,7 +13,12 @@ export async function insertSubmission(
         text,
         submittedAt,
         receivedAt: new Date(),
-        status: 'unprocessed'
+        status: 'unprocessed',
+        // Spread rather than set, so a submission posted without metadata has
+        // no such field at all. Assigning it unconditionally would write
+        // `metadata: null` onto every document, because the driver serialises
+        // undefined as null unless told otherwise.
+        ...(metadata === undefined ? {} : { metadata })
       }
     },
     { upsert: true }

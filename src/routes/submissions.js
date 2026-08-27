@@ -18,21 +18,36 @@ export const submissions = [
     method: 'POST',
     path: '/submissions',
     options: {
+      // The only authenticated route: it is the one a public-facing service
+      // posts to. The other three are called by aice-triage-frontend, which
+      // sends no token; giving it one is work in a third repository. Because
+      // the strategy is per route rather than the default, a route added later
+      // is open unless somebody remembers. See "Service-to-service
+      // authentication" in docs/architecture.md.
+      auth: 'jwt',
       validate: {
         payload: Joi.object({
           submissionId: Joi.string().min(1).required(),
           text: Joi.string().min(1).required(),
-          submittedAt: Joi.string().isoDate().optional()
+          submittedAt: Joi.string().isoDate().optional(),
+          // Tracing detail about the submission that is not part of what gets
+          // scored. It is stored on the document and never reaches a model:
+          // the scoring handler builds `{ id, text }` explicitly rather than
+          // passing the entity through, so anything kept here stays out of the
+          // prompt by construction. Callers may put the submitter's address in
+          // it; nothing here obliges them to.
+          metadata: Joi.object().optional()
         })
       }
     },
     handler: async (request, h) => {
-      const { submissionId, text, submittedAt } = request.payload
+      const { submissionId, text, submittedAt, metadata } = request.payload
 
       await insertSubmission(request.db, {
         submissionId,
         text,
-        submittedAt
+        submittedAt,
+        metadata
       })
 
       return h.response().code(202)
