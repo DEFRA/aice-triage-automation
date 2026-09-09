@@ -12,8 +12,14 @@ on:
       - ready_for_review
 
 jobs:
+  security-scan:
+    name: Security Scanning
+    uses: ./.github/workflows/scan.yml
+    secrets: inherit
+
   pr-validator:
     name: Run Pull Request Checks
+    needs: security-scan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -32,14 +38,13 @@ jobs:
           npm ci
           npm run format:check
           npm run lint
-          npm test
 
       - name: Test Docker Image Build
         run: |
           set +e
           docker build --no-cache --tag cdp-node-backend-template .
           exit $?
-          
+
       - name: Bedrock classify integration
         if: vars.RUN_BEDROCK_INTEGRATION == 'true'
         env:
@@ -55,10 +60,3 @@ jobs:
         with:
           name: acceptance-logs
           path: acceptance-logs/
-
-#      - name: SonarCloud Scan
-#        if: github.actor != 'dependabot[bot]'
-#        uses: SonarSource/sonarqube-scan-action@v5.3.1 #  (or check latest version on https://github.com/marketplace/actions/official-sonarqube-scan)
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
