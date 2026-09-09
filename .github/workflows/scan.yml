@@ -1,0 +1,34 @@
+name: Scan
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  sonarcloud:
+    name: Run Tests and SonarCloud Scan
+    if: ${{ github.event_name != 'schedule' && github.actor != 'dependabot[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0 # Depth 0 is required for SonarCloud to work out new code
+
+      - name: Setup Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Test code and Create Test Coverage Reports
+        run: |
+          mkdir -p coverage
+          chmod -R a+rw ./coverage
+          npm ci
+          npm test
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8.2.1
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

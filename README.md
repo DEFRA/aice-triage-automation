@@ -1,5 +1,9 @@
 # aice-triage-automation
 
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_aice-triage-automation&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=DEFRA_aice-triage-automation)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_aice-triage-automation&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=DEFRA_aice-triage-automation)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_aice-triage-automation&metric=coverage)](https://sonarcloud.io/summary/new_code?id=DEFRA_aice-triage-automation)
+
 Backend service that automates the AI Capability and Enablement (AICE) team's AI
 use-case triage process.
 
@@ -305,7 +309,11 @@ the [.github/example.dependabot.yml](.github/example.dependabot.yml) to `.github
 
 ### SonarCloud
 
-Instructions for setting up SonarCloud can be found in [sonar-project.properties](./sonar-project.properties)
+Every pull request, push to `main` and hot fix runs the tests with coverage and
+uploads the result to [SonarCloud](https://sonarcloud.io/project/overview?id=DEFRA_aice-triage-automation)
+via the reusable [scan workflow](./.github/workflows/scan.yml). It needs the
+`SONAR_TOKEN` repository secret. Project settings live in
+[sonar-project.properties](./sonar-project.properties).
 
 ## Licence
 

@@ -13,8 +13,14 @@ env:
   AWS_ACCOUNT_ID: '094954420758'
 
 jobs:
+  security-scan:
+    name: Security Scanning
+    uses: ./.github/workflows/scan.yml
+    secrets: inherit
+
   build:
     name: CDP-build-hotfix-workflow
+    needs: security-scan
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -22,23 +28,16 @@ jobs:
         with:
           fetch-depth: 0 # Depth 0 is required for branch-based versioning
 
-      - uses: actions/setup-node@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: npm
 
-      # Ensure tests pass. Add more checks if required
-      - run: npm ci
-      - run: npm test
+      - name: Check lockfile is up to date
+        run: npm ci --omit=dev
 
       - name: Publish Hot Fix
         uses: DEFRA/cdp-build-action/build-hotfix@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-#     - run: npm install && npm test
-#     - name: SonarCloud Scan
-#       uses: SonarSource/sonarqube-scan-action@v5.3.1 #  (or check latest version on https://github.com/marketplace/actions/official-sonarqube-scan)
-#       env:
-#         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
